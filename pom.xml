@@ -3,10 +3,10 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <groupId>uk.ac.ebi.pride</groupId>
-    <artifactId>pride-chart</artifactId>
-    <version>1.0.4-SNAPSHOT</version>
+    <groupId>uk.ac.ebi.pride.toolsuite</groupId>
+    <artifactId>inspector-quality-chart</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>PRIDE Inspector Quality Chart library</name>
 
     <licenses>
         <license>
@@ -40,6 +40,16 @@
         <developer>
             <id>fabregat</id>
             <name>Antonio Fabregat</name>
+            <organization>Proteomics Services Team, PANDA Group, EMBL-European Bioinformatics Institute</organization>
+            <organizationUrl>http://www.ebi.ac.uk/pride</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>0</timezone>
+        </developer>
+        <developer>
+            <id>yperez</id>
+            <name>Yasset Perez-Riverol</name>
             <organization>Proteomics Services Team, PANDA Group, EMBL-European Bioinformatics Institute</organization>
             <organizationUrl>http://www.ebi.ac.uk/pride</organizationUrl>
             <roles>
@@ -124,7 +134,7 @@
                     <archive>
                         <manifest>
                             <!--export a JSON string -->
-                            <mainClass>uk.ac.ebi.pride.chart.utils.PrideJSONTransformer</mainClass>
+                            <mainClass>uk.ac.ebi.pride.toolsuite.chart.utils.PrideJSONTransformer</mainClass>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib</classpathPrefix>
                         </manifest>
