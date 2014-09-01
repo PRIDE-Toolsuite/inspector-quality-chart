@@ -71,7 +71,6 @@ public class DataAccessReaderTest {
         for (PrideData data : jsonDataSource.getRangeData()) {
             sum += data.getData();
         }
-
         // tolerance is <1%
         for (int i = 0; i < prideDataSource.getRangeData().length; i++) {
             assertTrue(Math.abs(prideDataSource.getRangeData()[i].getData() - jsonDataSource.getRangeData()[i].getData()) < sum * 0.01);
@@ -94,26 +93,11 @@ public class DataAccessReaderTest {
         SortedMap<PrideHistogramBin, Double> allJSONHistogram = prideDataSource.getIntensityMap().get(PrideDataType.ALL_SPECTRA);
 
         int min = Math.min(idPrideHistogram.keySet().size(), idJSONHistogram.keySet().size());
-//        for (int i = 0; i < min; i++) {
-//            assertEquals(idPrideDataSource.getDomainData()[i], idJSONDataSource.getDomainData()[i]);
-//            assertTrue(Math.abs(idPrideDataSource.getRangeData()[i].getData() - idJSONDataSource.getRangeData()[i].getData()) < 0.01);
-//        }
-//
-//        min = Math.min(unPrideDataSource.getDomainData().length, unJSONDataSource.getDomainData().length);
-//        for (int i = 0; i < min; i++) {
-//            assertEquals(unPrideDataSource.getDomainData()[i], unJSONDataSource.getDomainData()[i]);
-//            assertTrue(Math.abs(unPrideDataSource.getRangeData()[i].getData() - unJSONDataSource.getRangeData()[i].getData()) < 0.01);
-//        }
-//
-//        min = Math.min(allPrideDataSource.getDomainData().length, allJSONDataSource.getDomainData().length);
-//        for (int i = 0; i < min; i++) {
-//            assertEquals(allPrideDataSource.getDomainData()[i], allJSONDataSource.getDomainData()[i]);
-//            assertTrue(Math.abs(allPrideDataSource.getRangeData()[i].getData() - allJSONDataSource.getRangeData()[i].getData()) < 0.01);
-//        }
     }
 
     @Test
     public void testPrecursorCharge() throws Exception {
+
         PrideChartType type = PrideChartType.PRECURSOR_CHARGE;
 
         PrideXYDataSource prideDataSource = dataReader.getXYDataSourceMap().get(type);

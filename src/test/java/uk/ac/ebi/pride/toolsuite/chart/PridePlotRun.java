@@ -17,6 +17,7 @@ import java.util.Random;
 * Date: 13/06/13
 */
 public class PridePlotRun {
+
     private void drawChart(PrideXYPlot plot) {
         if (plot != null) {
             JFreeChart chart = PrideChartFactory.getChart(plot);

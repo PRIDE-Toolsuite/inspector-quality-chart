@@ -1,8 +1,0 @@
-1, {"ErrorMessages":["The experiment does not contain intensity values"]}
-2, {"ErrorMessages":["The experiment does not contain precursor charge values"]}
-3, {"ErrorMessages":["The experiment does not contain precursor M/Z values and/or no precursor charges","The experiment does not contain precursor charge values"]}
-4, {"ErrorMessages":["The experiment does not contain precursor charge values","The experiment does not contain precursor mass values"]}
-5, {"Series":[{"id":"Freq","YAxis":[48,41,22,7,4,3,3,7,1,1,2,1,1,1,2,1,1],"XAxis":[1,2,3,4,5,6,7,8,9,15,16,21,26,29,30,40,44]}]}
-6, {"ErrorMessages":["The experiment does not contain intensity values"]}
-7, {"ErrorMessages":["The experiment does not contain precursor charges","The experiment does not contain precursor masses"]}
-8, {"Series":[{"id":"MissedCleavage","YAxis":[458,108,34,10,1,2,2],"XAxis":[0,1,2,3,4,5,6]}]}
