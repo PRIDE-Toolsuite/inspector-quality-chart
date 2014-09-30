@@ -2,7 +2,7 @@ package uk.ac.ebi.pride.toolsuite.chart.io;
 
 import org.apache.log4j.Logger;
 import org.json.JSONException;
-import uk.ac.ebi.pride.data.controller.impl.ControllerImpl.PrideXmlControllerImpl;
+import uk.ac.ebi.pride.utilities.data.controller.impl.ControllerImpl.PrideXmlControllerImpl;
 
 import java.io.File;
 

@@ -6,9 +6,9 @@ import uk.ac.ebi.pride.toolsuite.chart.io.DataAccessReader;
 import uk.ac.ebi.pride.toolsuite.chart.io.PrideDataException;
 import uk.ac.ebi.pride.toolsuite.chart.io.PrideDataReader;
 import uk.ac.ebi.pride.toolsuite.chart.io.PrideJSONWriter;
-import uk.ac.ebi.pride.data.controller.DataAccessController;
-import uk.ac.ebi.pride.data.controller.impl.ControllerImpl.MzIdentMLControllerImpl;
-import uk.ac.ebi.pride.data.controller.impl.ControllerImpl.PrideXmlControllerImpl;
+import uk.ac.ebi.pride.utilities.data.controller.DataAccessController;
+import uk.ac.ebi.pride.utilities.data.controller.impl.ControllerImpl.MzIdentMLControllerImpl;
+import uk.ac.ebi.pride.utilities.data.controller.impl.ControllerImpl.PrideXmlControllerImpl;
 
 import java.io.*;
 import java.math.BigDecimal;

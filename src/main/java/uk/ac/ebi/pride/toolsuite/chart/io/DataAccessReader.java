@@ -4,13 +4,13 @@ import org.apache.log4j.Logger;
 import uk.ac.ebi.pride.toolsuite.chart.PrideChartType;
 import uk.ac.ebi.pride.toolsuite.chart.dataset.*;
 import uk.ac.ebi.pride.toolsuite.chart.utils.PridePlotUtils;
-import uk.ac.ebi.pride.data.controller.DataAccessController;
-import uk.ac.ebi.pride.data.controller.DataAccessUtilities;
-import uk.ac.ebi.pride.data.core.Modification;
-import uk.ac.ebi.pride.data.core.Peptide;
-import uk.ac.ebi.pride.data.core.Protein;
-import uk.ac.ebi.pride.data.core.Spectrum;
-import uk.ac.ebi.pride.mol.MoleculeUtilities;
+import uk.ac.ebi.pride.utilities.data.controller.DataAccessController;
+import uk.ac.ebi.pride.utilities.data.controller.DataAccessUtilities;
+import uk.ac.ebi.pride.utilities.data.core.Modification;
+import uk.ac.ebi.pride.utilities.data.core.Peptide;
+import uk.ac.ebi.pride.utilities.data.core.Protein;
+import uk.ac.ebi.pride.utilities.data.core.Spectrum;
+import uk.ac.ebi.pride.utilities.mol.MoleculeUtilities;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +18,7 @@ import java.util.SortedMap;
 
 
 /**
+ * DataAccess Reader is a class to do the analysis of protein and peptide statistics and chart generation.
  * @author qingwei
  * Date: 12/06/13
  */
@@ -68,7 +69,8 @@ public class DataAccessReader extends PrideDataReader {
     private Double calcDeltaMZ(Peptide peptide) {
         List<Double> modMassList = new ArrayList<Double>();
         for (Modification mod : peptide.getModifications()) {
-            modMassList.add(mod.getMonoisotopicMassDelta().get(0));
+            if(mod.getMonoisotopicMassDelta().size() > 0)
+               modMassList.add(mod.getMonoisotopicMassDelta().get(0));
         }
 
         return MoleculeUtilities.calculateDeltaMz(

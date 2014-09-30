@@ -1,7 +1,7 @@
 package uk.ac.ebi.pride.toolsuite.chart.io;
 
 import uk.ac.ebi.pride.toolsuite.chart.dataset.*;
-import uk.ac.ebi.pride.data.core.Spectrum;
+import uk.ac.ebi.pride.utilities.data.core.Spectrum;
 
 import java.util.*;
 
