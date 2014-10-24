@@ -15,6 +15,7 @@ import java.util.SortedMap;
  * Date: 13/06/13
  */
 public class PrideDatasetFactory {
+
     private PrideDatasetFactory() {}
 
     private static XYSeries getSeries(PrideXYDataSource dataSource) {
@@ -30,6 +31,7 @@ public class PrideDatasetFactory {
     }
 
     public static XYSeriesCollection getXYDataset(PrideXYDataSource dataSource) {
+
         XYSeries series = getSeries(dataSource.filter(dataSource.getDataType()));
 
         XYSeriesCollection dataset = new XYSeriesCollection();
@@ -76,6 +78,27 @@ public class PrideDatasetFactory {
         for (PrideDataType dataType : histogramMap.keySet()) {
             histogram = histogramMap.get(dataType);
             seriesKey = dataType.getTitle();
+            for (PrideHistogramBin bin : histogram.keySet()) {
+                category = bin.getEndBoundary() == Integer.MAX_VALUE ? ">" + bin.getStartBoundary() : bin.toString(new DecimalFormat("#"));
+                dataset.addValue(histogram.get(bin), seriesKey, category);
+            }
+        }
+
+        return dataset;
+    }
+
+    public static CategoryDataset getCategorryHistogramDataset(CategorySetHistogramDataSource dataSource){
+
+        SortedMap<String, SortedMap<PrideHistogramBin, Integer>> histogramMap = dataSource.getHistogramMap();
+
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        String category;
+        String seriesKey;
+        SortedMap<PrideHistogramBin, Integer> histogram;
+        for (String dataType : histogramMap.keySet()) {
+            histogram = histogramMap.get(dataType);
+            seriesKey = dataType;
             for (PrideHistogramBin bin : histogram.keySet()) {
                 category = bin.getEndBoundary() == Integer.MAX_VALUE ? ">" + bin.getStartBoundary() : bin.toString(new DecimalFormat("#"));
                 dataset.addValue(histogram.get(bin), seriesKey, category);

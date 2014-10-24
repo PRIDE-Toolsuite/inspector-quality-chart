@@ -6,6 +6,7 @@ package uk.ac.ebi.pride.toolsuite.chart.io;
  */
 public class PrideDataException extends Exception {
     public static final String NO_PRE_CHARGE = "The experiment does not contain precursor charge values";
+    public static final String NO_PROTEIN_QUANT = "No protein quantitation data reported";
     public static final String NO_MASSES = "The experiment does not contain precursor masses";
     public static final String NO_INTENSITY = "The experiment does not contain intensity values";
     public static final String NO_IDENTIFICATION = "The experiment does not contain identifications data";

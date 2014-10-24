@@ -3,10 +3,7 @@ package uk.ac.ebi.pride.toolsuite.chart;
 import org.jfree.chart.ChartTheme;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.StandardChartTheme;
-import uk.ac.ebi.pride.toolsuite.chart.dataset.PrideDataType;
-import uk.ac.ebi.pride.toolsuite.chart.dataset.PrideDatasetFactory;
-import uk.ac.ebi.pride.toolsuite.chart.dataset.PrideHistogramDataSource;
-import uk.ac.ebi.pride.toolsuite.chart.dataset.PrideXYDataSource;
+import uk.ac.ebi.pride.toolsuite.chart.dataset.*;
 import uk.ac.ebi.pride.toolsuite.chart.io.PrideDataReader;
 import uk.ac.ebi.pride.toolsuite.chart.io.PrideSpectrumHistogramDataSource;
 import uk.ac.ebi.pride.toolsuite.chart.plot.*;
@@ -20,6 +17,7 @@ import java.util.SortedMap;
  * Date: 12/06/13
  */
 public class PrideChartFactory {
+
     private static ChartTheme currentTheme = new StandardChartTheme("JFree");
 
     public static PrideXYPlot getXYPlot(PrideXYDataSource dataSource, PrideChartType type) {
@@ -52,6 +50,7 @@ public class PrideChartFactory {
     }
 
     public static PrideXYPlot getAvgPlot(PrideHistogramDataSource dataSource) {
+
         return new AverageMSPlot(PrideDatasetFactory.getXYDataset((PrideSpectrumHistogramDataSource) dataSource), PrideDataType.ALL_SPECTRA);
     }
 
@@ -59,7 +58,6 @@ public class PrideChartFactory {
         if (dataSource == null) {
             return null;
         }
-
         PrideCategoryPlot plot;
         switch (type) {
             case PEAKS_MS:
@@ -68,12 +66,32 @@ public class PrideChartFactory {
             case PEAK_INTENSITY:
                 plot = new PeakIntensityPlot(PrideDatasetFactory.getHistogramDataset(dataSource), PrideDataType.ALL_SPECTRA);
                 break;
+
             default:
                 throw new IllegalArgumentException("Can not create Histogram style plot.");
         }
 
         return plot;
     }
+
+    public static PrideXYPlot getHistogramPlot(PrideXYDataSource dataSource, PrideChartType type) {
+        if (dataSource == null) {
+            return null;
+        }
+
+       QuantitationChart plot;
+        switch (type) {
+            case QUANTITATION_PEPTIDES:
+                plot = new QuantitationChart(PrideDatasetFactory.getXYDataset(dataSource), PrideDataType.ALL_SPECTRA);
+                break;
+            default:
+                throw new IllegalArgumentException("Can not create Histogram style plot.");
+        }
+
+        return plot;
+    }
+
+
 
     public static JFreeChart getChart(PrideCategoryPlot plot) {
         if (plot == null) {

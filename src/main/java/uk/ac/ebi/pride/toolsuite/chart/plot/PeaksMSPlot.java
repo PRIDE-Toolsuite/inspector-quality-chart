@@ -14,6 +14,7 @@ import java.util.TreeMap;
 * Date: 14/06/13
 */
 public class PeaksMSPlot extends PrideCategoryPlot {
+
     public PeaksMSPlot(CategoryDataset dataset) {
         this(dataset, true);
     }
@@ -22,6 +23,7 @@ public class PeaksMSPlot extends PrideCategoryPlot {
         super(PrideChartType.PEAKS_MS, dataset, smallPlot);
 
         BarRenderer renderer = (BarRenderer) getRenderer();
+        renderer.setMaximumBarWidth(0.2);
         renderer.setBaseItemLabelGenerator(new CategoryPercentageLabel());
         renderer.setBaseItemLabelsVisible(true);
     }

@@ -14,14 +14,17 @@ import java.util.*;
 * Date: 14/06/13
 */
 public class PrideHistogramDataSource implements PrideDataSource {
+
     protected SortedSet<PrideHistogramBin> bins = new TreeSet<PrideHistogramBin>();
 
     protected PrideData[] values;
+
     private boolean calcAllSpectra = false;
 
     private SortedMap<PrideDataType, SortedMap<PrideHistogramBin, Integer>> histMap;
 
     private Set<PrideDataType> dataTypeList = new HashSet<PrideDataType>();   // list all data type which stored in current data source.
+
     private boolean displayDataTypeList = false;
 
     public PrideHistogramDataSource(PrideData[] values, boolean calcAllSpectra) {
@@ -126,6 +129,8 @@ public class PrideHistogramDataSource implements PrideDataSource {
 
         SortedMap<PrideHistogramBin, Integer> idHistogram;
         SortedMap<PrideHistogramBin, Integer> unHistogram;
+        SortedMap<PrideHistogramBin, Integer> targetHistogram;
+        SortedMap<PrideHistogramBin, Integer> decoyHistogram;
 
         SortedMap<PrideHistogramBin, Integer> allHistogram = createEmptyHistogram();
         histMap.put(PrideDataType.ALL_SPECTRA, allHistogram);
@@ -147,7 +152,22 @@ public class PrideHistogramDataSource implements PrideDataSource {
                             histMap.put(PrideDataType.UNIDENTIFIED_SPECTRA, unHistogram);
                         }
                         unHistogram.put(bin, unHistogram.get(bin) + 1);
-                    } else if (d.getType() == PrideDataType.ALL_SPECTRA) {
+                    } else if (d.getType() == PrideDataType.IDENTIFIED_TARGET) {
+                        targetHistogram = histMap.get(PrideDataType.IDENTIFIED_TARGET);
+                        if (targetHistogram == null) {
+                            targetHistogram = createEmptyHistogram();
+                            histMap.put(PrideDataType.IDENTIFIED_TARGET, targetHistogram);
+                        }
+                        targetHistogram.put(bin, targetHistogram.get(bin) + 1);
+                    }else if (d.getType() == PrideDataType.IDENTIFIED_DECOY) {
+                        decoyHistogram = histMap.get(PrideDataType.IDENTIFIED_DECOY);
+                        if (decoyHistogram == null) {
+                            decoyHistogram = createEmptyHistogram();
+                            histMap.put(PrideDataType.IDENTIFIED_DECOY, decoyHistogram);
+                        }
+                        decoyHistogram.put(bin, decoyHistogram.get(bin) + 1);
+
+                    }else if (d.getType() == PrideDataType.ALL_SPECTRA) {
                         allHistogram.put(bin, allHistogram.get(bin) + 1);
                     }
 

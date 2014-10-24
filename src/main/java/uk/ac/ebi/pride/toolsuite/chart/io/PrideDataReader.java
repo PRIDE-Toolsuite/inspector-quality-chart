@@ -12,6 +12,7 @@ import java.util.TreeMap;
  * Date: 12/06/13
  */
 public abstract class PrideDataReader {
+
     protected SortedMap<PrideChartType, PrideXYDataSource> xyDataSourceMap = new TreeMap<PrideChartType, PrideXYDataSource>();
     protected SortedMap<PrideChartType, PrideHistogramDataSource> histogramDataSourceMap = new TreeMap<PrideChartType, PrideHistogramDataSource>();
     protected SortedMap<PrideChartType, PrideDataException> errorMap = new TreeMap<PrideChartType, PrideDataException>();

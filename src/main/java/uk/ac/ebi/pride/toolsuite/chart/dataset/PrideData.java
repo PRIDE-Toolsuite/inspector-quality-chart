@@ -2,11 +2,16 @@ package uk.ac.ebi.pride.toolsuite.chart.dataset;
 
 /**
  * @author Qingwei
+ * @author ypriverol
  * Date: 17/06/13
  */
 public class PrideData implements Comparable<PrideData> {
+
     private Double data;
+
     private PrideDataType type;
+
+    private String category;
 
     public PrideData(Double data) {
         this(data,  PrideDataType.ALL);
@@ -15,6 +20,11 @@ public class PrideData implements Comparable<PrideData> {
     public PrideData(Double data, PrideDataType type) {
         this.data = data;
         this.type = type;
+    }
+
+    public PrideData(Double data, String category){
+        this(data, PrideDataType.ALL_SPECTRA);
+        this.category = category;
     }
 
     public Double getData() {
@@ -27,6 +37,14 @@ public class PrideData implements Comparable<PrideData> {
 
     public PrideDataType getType() {
         return type;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     @Override

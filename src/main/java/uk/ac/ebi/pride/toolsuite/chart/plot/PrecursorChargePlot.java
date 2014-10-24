@@ -24,7 +24,8 @@ public class PrecursorChargePlot extends PrideXYPlot {
     }
 
     public PrecursorChargePlot(XYDataset dataset, boolean smallPlot) {
-        super(PrideChartType.PRECURSOR_CHARGE, new XYBarDataset(dataset, 0.5), new XYBarRenderer(), smallPlot);
+
+        super(PrideChartType.PRECURSOR_CHARGE, new XYBarDataset(dataset, 0.2), new XYBarRenderer(), smallPlot);
 
         XYBarRenderer renderer = (XYBarRenderer) getRenderer();
         renderer.setBaseItemLabelsVisible(true);

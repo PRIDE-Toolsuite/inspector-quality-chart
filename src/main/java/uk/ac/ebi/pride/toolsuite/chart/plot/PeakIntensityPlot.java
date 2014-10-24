@@ -12,9 +12,11 @@ import java.util.TreeMap;
 
 /**
 * @author qingwei
+ * @author ypriverol
 * Date: 14/06/13
 */
 public class PeakIntensityPlot extends PrideCategoryPlot {
+
     private CategoryDataset dataset;
 
     public PeakIntensityPlot(CategoryDataset dataset, PrideDataType dataType) {
@@ -22,9 +24,11 @@ public class PeakIntensityPlot extends PrideCategoryPlot {
     }
 
     public PeakIntensityPlot(CategoryDataset dataset, PrideDataType dataType, boolean smallPlot) {
+
         super(PrideChartType.PEAK_INTENSITY, dataset, smallPlot);
 
         BarRenderer renderer = (BarRenderer) getRenderer();
+        renderer.setMaximumBarWidth(0.2);
         for (int i = 0; i < dataset.getColumnCount(); i++) {
             renderer.setSeriesItemLabelGenerator(i, new CategoryPercentageLabel());
             renderer.setSeriesItemLabelsVisible(i, true);
@@ -49,8 +53,11 @@ public class PeakIntensityPlot extends PrideCategoryPlot {
                 renderer.setSeriesPaint(i, Color.RED);
             } else if (dataset.getRowKey(i).equals(PrideDataType.UNIDENTIFIED_SPECTRA)) {
                 renderer.setSeriesPaint(i, Color.GREEN);
+            }else if (dataset.getRowKey(i).equals(PrideDataType.IDENTIFIED_DECOY)) {
+                renderer.setSeriesPaint(i, Color.BLACK);
+            }else if (dataset.getRowKey(i).equals(PrideDataType.IDENTIFIED_DECOY)) {
+                renderer.setSeriesPaint(i, Color.CYAN);
             }
-
             if (dataset.getRowKey(i).equals(dataType.getTitle())) {
                 renderer.setSeriesVisible(i, visible);
             }
@@ -64,6 +71,8 @@ public class PeakIntensityPlot extends PrideCategoryPlot {
         optionList.put(PrideDataType.IDENTIFIED_SPECTRA, false);
         optionList.put(PrideDataType.UNIDENTIFIED_SPECTRA, false);
         optionList.put(PrideDataType.ALL_SPECTRA, false);
+        optionList.put(PrideDataType.IDENTIFIED_DECOY, false);
+        optionList.put(PrideDataType.IDENTIFIED_TARGET, false);
 
         PrideDataType dataType;
         for (Object key : dataset.getRowKeys()) {

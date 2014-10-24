@@ -25,6 +25,7 @@ public class PrideChartSummary {
         SPECTRA_SUMMARY.add(PrideChartType.PRECURSOR_MASSES);
         SPECTRA_SUMMARY.add(PrideChartType.PEAKS_MS);
         SPECTRA_SUMMARY.add(PrideChartType.PEAK_INTENSITY);
+        SPECTRA_SUMMARY.add(PrideChartType.QUANTITATION_PEPTIDES);
 
         PROJECT_SUMMARY.addAll(PROTEIN_SUMMARY);
         PROJECT_SUMMARY.addAll(SPECTRA_SUMMARY);

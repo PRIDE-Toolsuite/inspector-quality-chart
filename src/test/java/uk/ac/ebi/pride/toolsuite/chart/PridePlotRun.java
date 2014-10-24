@@ -82,6 +82,13 @@ public class PridePlotRun {
 //                massesPlot.updateQuartilesType(QuartilesType.NONE);
 //                massesPlot.updateSpectraSeries(PrideDataType.ALL_SPECTRA);
                 break;
+            case QUANTITATION_PEPTIDES:
+                dataSource = new PrideXYDataSource(domainData, rangeData, PrideDataType.ALL_SPECTRA);
+                plot = new PrecursorMassesPlot(PrideDatasetFactory.getXYDataset(dataSource), PrideDataType.IDENTIFIED_SPECTRA);
+                massesPlot = (PrecursorMassesPlot)plot ;
+                massesPlot.updateQuartilesType(QuartilesType.HUMAN);
+                break;
+
             default:
                 plot = null;
         }

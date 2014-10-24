@@ -5,14 +5,15 @@ package uk.ac.ebi.pride.toolsuite.chart;
  * Date: 12/06/13
  */
 public enum PrideChartType {
-    DELTA_MASS        ("Delta m/z",                 "Delta m/z",                                         "Experimental m/z - Theoretical m/z",    "Relative Frequency",  false),
-    PEPTIDES_PROTEIN  ("Peptides per Protein",      "Number of Peptides Identified per Protein",         "Number of Peptides",                    "Frequency",           false),
-    MISSED_CLEAVAGES  ("Missed Typtic Cleavages",   "Number of Missed Typtic Cleavages",                 "Missed Cleavages",                      "Frequency",           false),
-    AVERAGE_MS        ("Average MS/MS Spectrum",    "Average MS/MS Spectrum",                            "m/z",                                   "Intensity",           true),
-    PRECURSOR_CHARGE  ("Precursor Ion Charge",      "Precursor Ion Charge Distribution",                 "Precursor Ion Charge",                  "Frequency",           true),
-    PRECURSOR_MASSES  ("Precursor Ion Masses",      "Distribution of Precursor Ion Masses",              "Mass (Daltons)",                        "Relative Frequency",  true),
-    PEAKS_MS          ("Peaks per MS/MS Spectrum",  "Number of Peaks per MS/MS Spectrum",                "Number of Peaks",                       "Frequency",           false),
-    PEAK_INTENSITY    ("Peak Intensity",            "Peak Intensity Distribution",                       "Intensity",                             "Frequency",           true),
+    DELTA_MASS        ("Delta m/z",                    "Delta m/z",                                         "Experimental m/z - Theoretical m/z",    "Relative Frequency",  false),
+    PEPTIDES_PROTEIN  ("Peptides per Protein",         "Number of Peptides Identified per Protein",         "Number of Peptides",                    "Frequency",           false),
+    MISSED_CLEAVAGES  ("Missed Typtic Cleavages",      "Number of Missed Typtic Cleavages",                 "Missed Cleavages",                      "Frequency",           false),
+    AVERAGE_MS        ("Average MS/MS Spectrum",       "Average MS/MS Spectrum",                            "m/z",                                   "Intensity",           true),
+    PRECURSOR_CHARGE  ("Precursor Ion Charge",         "Precursor Ion Charge Distribution",                 "Precursor Ion Charge",                  "Frequency",           true),
+    PRECURSOR_MASSES  ("Precursor Ion Masses",         "Distribution of Precursor Ion Masses",              "Mass (Daltons)",                        "Relative Frequency",  true),
+    PEAKS_MS          ("Peaks per MS/MS Spectrum",     "Number of Peaks per MS/MS Spectrum",                "Number of Peaks",                       "Frequency",           false),
+    PEAK_INTENSITY    ("Peak Intensity",               "Peak Intensity Distribution",                       "Intensity",                             "Frequency",           true),
+    QUANTITATION_PEPTIDES("Number of Peptides by Ratio", "Number of Peptides by Ratio",                     "Ratio",                    "Number of Peptides",           true),
     ;
 
     private String title;

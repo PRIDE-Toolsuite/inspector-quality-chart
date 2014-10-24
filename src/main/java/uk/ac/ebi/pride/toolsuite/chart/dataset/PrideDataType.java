@@ -5,13 +5,16 @@ import java.util.Collection;
 
 /**
  * @author qingwei
+ * @author ypriverol
  * Date: 14/06/13
  */
 public enum PrideDataType {
     ALL                  (0xFFFF, "All"),
-    ALL_SPECTRA          (0x0003, "All Spectra"),              //0011 = 0010 | 0001
-    IDENTIFIED_SPECTRA   (0x0002, "Identified Spectra"),       //0010
-    UNIDENTIFIED_SPECTRA (0x0001, "Unidentified Spectra");     //0001
+    ALL_SPECTRA          (0x0007, "All Spectra"),              //0011 = 0010 | 0001
+    IDENTIFIED_SPECTRA   (0x0003, "Identified Spectra"),       //0010
+    IDENTIFIED_DECOY     (0x0001, "Decoy Identification"),
+    IDENTIFIED_TARGET    (0x0002, "Target Identification"),
+    UNIDENTIFIED_SPECTRA (0x0004, "Unidentified Spectra");     //0001
 
     private String title;
     private int id;
@@ -35,14 +38,20 @@ public enum PrideDataType {
             case 0xFFFF:
                 type = ALL;
                 break;
-            case 0x0003:
+            case 0x0007:
                 type = ALL_SPECTRA;
                 break;
-            case 0x0002:
+            case 0x0003:
                 type = IDENTIFIED_SPECTRA;
                 break;
-            case 0x0001:
+            case 0x0004:
                 type = UNIDENTIFIED_SPECTRA;
+                break;
+            case 0x0002:
+                type = IDENTIFIED_TARGET;
+                break;
+            case 0x0001:
+                type = IDENTIFIED_DECOY;
                 break;
             default:
                 throw new IllegalArgumentException("Can not find PrideDataType.");
@@ -60,9 +69,13 @@ public enum PrideDataType {
             return IDENTIFIED_SPECTRA;
         } else if (title.equalsIgnoreCase(UNIDENTIFIED_SPECTRA.title)) {
             return UNIDENTIFIED_SPECTRA;
-        } else {
-            return null;
+        } else if(title.equalsIgnoreCase(IDENTIFIED_DECOY.title)){
+            return IDENTIFIED_DECOY;
+        }else if(title.equalsIgnoreCase(IDENTIFIED_TARGET.title)){
+            return IDENTIFIED_TARGET;
         }
+        return null;
+        
     }
 
     /**

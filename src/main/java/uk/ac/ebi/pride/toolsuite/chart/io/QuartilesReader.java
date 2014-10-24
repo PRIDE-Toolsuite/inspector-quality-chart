@@ -15,6 +15,7 @@ import java.util.List;
  * Time: 15:52:30
  */
 public class QuartilesReader {
+
     private QuartilesType type;
 
     private List<Integer> points = new ArrayList<Integer>();

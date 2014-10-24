@@ -1,7 +1,8 @@
 package uk.ac.ebi.pride.toolsuite.chart.io;
 
 /**
- * User: Antonio Fabregat
+ * @author Antonio Fabregat
+ * @author ypriverol
  * Date: 9-mar-2011
  * Time: 16:30:07
  */

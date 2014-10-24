@@ -1,6 +1,8 @@
 package uk.ac.ebi.pride.toolsuite.chart.plot;
 
+import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.xy.XYBarDataset;
 import org.jfree.data.xy.XYDataset;
@@ -9,6 +11,7 @@ import uk.ac.ebi.pride.toolsuite.chart.dataset.PrideDataType;
 import uk.ac.ebi.pride.toolsuite.chart.plot.axis.PrideNumberTickUnit;
 import uk.ac.ebi.pride.toolsuite.chart.plot.label.XYPercentageLabel;
 
+import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.Map;
 import java.util.TreeMap;
@@ -23,7 +26,7 @@ public class PeptidesProteinPlot extends PrideXYPlot {
     }
 
     public PeptidesProteinPlot(XYDataset dataset, boolean smallPlot) {
-        super(PrideChartType.PEPTIDES_PROTEIN, new XYBarDataset(dataset, 0.5), new XYBarRenderer(), smallPlot);
+        super(PrideChartType.PEPTIDES_PROTEIN, new XYBarDataset(dataset, 0.2), new XYBarRenderer(), smallPlot);
 
         XYBarRenderer renderer = (XYBarRenderer) getRenderer();
         renderer.setBaseItemLabelGenerator(new XYPercentageLabel());
@@ -37,6 +40,14 @@ public class PeptidesProteinPlot extends PrideXYPlot {
 
         NumberAxis rangeAxis = (NumberAxis) getRangeAxis();
         rangeAxis.setMinorTickCount(barCount);
+
+        ValueAxis axis = getRangeAxis();
+        Font font = new Font("Dialog", Font.ROMAN_BASELINE, 50);
+        axis.setTickLabelFont(font);
+        domainAxis.setTickLabelFont(font);
+
+        setRangeAxis(axis);
+        setDomainAxis(domainAxis);
     }
 
     @Override

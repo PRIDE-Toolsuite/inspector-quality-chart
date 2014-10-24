@@ -1,20 +1,17 @@
 package uk.ac.ebi.pride.toolsuite.chart.io;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.log4j.Logger;
 import uk.ac.ebi.pride.toolsuite.chart.PrideChartType;
 import uk.ac.ebi.pride.toolsuite.chart.dataset.*;
 import uk.ac.ebi.pride.toolsuite.chart.utils.PridePlotUtils;
 import uk.ac.ebi.pride.utilities.data.controller.DataAccessController;
 import uk.ac.ebi.pride.utilities.data.controller.DataAccessUtilities;
-import uk.ac.ebi.pride.utilities.data.core.Modification;
-import uk.ac.ebi.pride.utilities.data.core.Peptide;
-import uk.ac.ebi.pride.utilities.data.core.Protein;
-import uk.ac.ebi.pride.utilities.data.core.Spectrum;
+import uk.ac.ebi.pride.utilities.data.core.*;
 import uk.ac.ebi.pride.utilities.mol.MoleculeUtilities;
+import uk.ac.ebi.pride.utilities.util.Tuple;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedMap;
+import java.util.*;
 
 
 /**
@@ -29,6 +26,7 @@ public class DataAccessReader extends PrideDataReader {
     private static final int DELTA_BIN_COUNT = 200;
     private static final double DELTA_MIN_BIN_WIDTH = 0.0005;
     private static final double PRE_MIN_BIN_WIDTH = 100;
+    private static final double QUANT_MIN_BIN_WITH = 0.1;
 
     private String source = "DataAccessController";
     private DataAccessController controller;
@@ -36,6 +34,7 @@ public class DataAccessReader extends PrideDataReader {
     private boolean noPeptide = true;
     private boolean noSpectra = true;
     private boolean noTandemSpectra = true;
+    private boolean decoyPresentInformation = false;
 
     private List<Double> deltaDomain = new ArrayList<Double>();
     private List<PrideData> deltaRange = new ArrayList<PrideData>();
@@ -52,11 +51,18 @@ public class DataAccessReader extends PrideDataReader {
     private List<Double> preMassesDomain = new ArrayList<Double>();
     private List<PrideData> preMassesRange = new ArrayList<PrideData>();
 
+    private List<Double> preQuantDomain = new ArrayList<Double>();
+    private List<PrideData> preQuantRange = new ArrayList<PrideData>();
+
+    private Map<Comparable, String> variables = new HashMap<Comparable, String>();
+    private Map<Comparable, List<Double>> variablesStudy = new HashMap<Comparable, List<Double>>();
+
     public DataAccessReader(DataAccessController controller) throws PrideDataException {
         if (controller == null) {
             throw new NullPointerException(source + " is null!");
         }
         this.controller = controller;
+        decoyPresentInformation = controller.hasDecoyInformation();
 
         readData();
     }
@@ -100,15 +106,12 @@ public class DataAccessReader extends PrideDataReader {
             return;
         }
 
-        PrideDataType dataType = PrideDataType.ALL_SPECTRA;
+        PrideEqualWidthHistogramDataSource dataSource = new PrideEqualWidthHistogramDataSource(deltaMZList.toArray(new PrideData[deltaMZList.size()]),true);
 
-        PrideEqualWidthHistogramDataSource dataSource = new PrideEqualWidthHistogramDataSource(
-                deltaMZList.toArray(new PrideData[deltaMZList.size()]),
-                true
-        );
         double start = Double.MAX_VALUE;
         double end = Double.MIN_VALUE;
         double v;
+
         for (PrideData data : deltaMZList) {
             v = data.getData();
             if (v < start) {
@@ -118,6 +121,7 @@ public class DataAccessReader extends PrideDataReader {
                 end = v;
             }
         }
+
         double binWidth = (end - start) / DELTA_BIN_COUNT;
         binWidth = binWidth < DELTA_MIN_BIN_WIDTH ? DELTA_MIN_BIN_WIDTH : binWidth;
         dataSource.appendBins(dataSource.generateBins(-DELTA_BIN_COUNT * binWidth, binWidth, DELTA_BIN_COUNT * 2));
@@ -125,19 +129,23 @@ public class DataAccessReader extends PrideDataReader {
         SortedMap<PrideDataType, SortedMap<PrideHistogramBin, Integer>> histogramMap = dataSource.getHistogramMap();
         SortedMap<PrideHistogramBin, Integer> histogram;
         int maxFreq = 0;
-        histogram = histogramMap.get(dataType);
+
+        histogram = histogramMap.get(PrideDataType.IDENTIFIED_SPECTRA);
         for (Integer size : histogram.values()) {
             if (size > maxFreq) {
                 maxFreq = size;
             }
         }
-
         double relativeFreq;
-        for (PrideHistogramBin bin : histogram.keySet()) {
-            deltaDomain.add(bin.getStartBoundary());
-            relativeFreq = maxFreq == 0 ? 0 : histogram.get(bin) * 1.0d / maxFreq;
-            deltaRange.add(new PrideData(relativeFreq, dataType));
+        for(PrideDataType dataType: histogramMap.keySet()){
+            histogram = histogramMap.get(dataType);
+            for (PrideHistogramBin bin : histogram.keySet()) {
+                deltaDomain.add(bin.getStartBoundary());
+                relativeFreq = maxFreq == 0 ? 0 : histogram.get(bin) * 1.0d / maxFreq;
+                deltaRange.add(new PrideData(relativeFreq, dataType));
+            }
         }
+
 
         for (int i = 0; i < deltaRange.size(); i++) {
             if (deltaRange.get(i).getData() == null) {
@@ -148,7 +156,7 @@ public class DataAccessReader extends PrideDataReader {
         xyDataSourceMap.put(PrideChartType.DELTA_MASS, new PrideXYDataSource(
                 deltaDomain.toArray(new Double[deltaDomain.size()]),
                 deltaRange.toArray(new PrideData[deltaRange.size()]),
-                dataType
+                PrideDataType.IDENTIFIED_SPECTRA
         ));
     }
 
@@ -187,6 +195,57 @@ public class DataAccessReader extends PrideDataReader {
                 missedDomain,
                 missedRange,
                 dataType
+        ));
+    }
+
+    private void readQuantitation(Map<Comparable, String> studyVariables, Map<Comparable, List<Double>> values) {
+
+        if (noPeptide) {
+            errorMap.put(PrideChartType.QUANTITATION_PEPTIDES, new PrideDataException(PrideDataException.NO_PROTEIN_QUANT));
+            return;
+        }
+
+        if (variablesStudy.isEmpty()) {
+            errorMap.put(PrideChartType.QUANTITATION_PEPTIDES, new PrideDataException(PrideDataException.NO_PROTEIN_QUANT));
+            return;
+        }
+        if (noSpectra) {
+            errorMap.put(PrideChartType.PRECURSOR_MASSES, new PrideDataException(PrideDataException.NO_SPECTRA));
+            return;
+        }
+        List<PrideData> preQuantList = new ArrayList<PrideData>();
+        for(Comparable studyId: studyVariables.keySet()){
+            List<Double> valueStudy = values.get(studyId);
+            for(Double value: valueStudy){
+                PrideData pridata = new PrideData(value, studyVariables.get(studyId));
+                preQuantList.add(pridata);
+
+            }
+        }
+        CategorySetHistogramDataSource dataSource = new CategorySetHistogramDataSource(preQuantList.toArray(new PrideData[preQuantList.size()]));
+        dataSource.appendBins(dataSource.generateBins(0d, PRE_MIN_BIN_WIDTH));
+
+        SortedMap<String, SortedMap<PrideHistogramBin, Integer>> histogramMap = dataSource.getHistogramMap();
+        for(String variable: histogramMap.keySet()){
+            SortedMap<PrideHistogramBin, Integer> histogram = histogramMap.get(variable);
+            if (histogram != null) {
+                int studyCount = 0;
+                for (PrideHistogramBin bin : histogram.keySet()) {
+                    studyCount += histogram.get(bin);
+                }
+                for (PrideHistogramBin bin : histogram.keySet()) {
+                    preQuantDomain.add(bin.getStartBoundary());
+                    preQuantRange.add(new PrideData(
+                            histogram.get(bin) * 1.0d / studyCount,
+                            variable
+                    ));
+                }
+            }
+        }
+        xyDataSourceMap.put(PrideChartType.QUANTITATION_PEPTIDES, new PrideXYDataSource(
+                preQuantDomain.toArray(new Double[preMassesDomain.size()]),
+                preQuantRange.toArray(new PrideData[preMassesRange.size()]),
+                PrideDataType.ALL_SPECTRA
         ));
     }
 
@@ -317,6 +376,7 @@ public class DataAccessReader extends PrideDataReader {
     }
 
     private void readPeakIntensity(List<PrideData> peaksIntensityList) {
+
         if (noTandemSpectra) {
             errorMap.put(PrideChartType.PEAK_INTENSITY, new PrideDataException(PrideDataException.NO_TANDEM_SPECTRA));
             return;
@@ -327,9 +387,15 @@ public class DataAccessReader extends PrideDataReader {
                 true
         );
         dataSource.appendBin(new PrideHistogramBin(0, 5));
-        dataSource.appendBin(new PrideHistogramBin(10, 100));
-        dataSource.appendBin(new PrideHistogramBin(100, 1000));
-        dataSource.appendBin(new PrideHistogramBin(1000, 10000));
+        dataSource.appendBin(new PrideHistogramBin(10,  100));
+        dataSource.appendBin(new PrideHistogramBin(100, 300));
+        dataSource.appendBin(new PrideHistogramBin(300, 500));
+        dataSource.appendBin(new PrideHistogramBin(500, 700));
+        dataSource.appendBin(new PrideHistogramBin(700, 900));
+        dataSource.appendBin(new PrideHistogramBin(900, 1000));
+        dataSource.appendBin(new PrideHistogramBin(1000, 3000));
+        dataSource.appendBin(new PrideHistogramBin(3000, 6000));
+        dataSource.appendBin(new PrideHistogramBin(6000, 10000));
         dataSource.appendBin(new PrideHistogramBin(10000, Integer.MAX_VALUE));
 
         histogramDataSourceMap.put(PrideChartType.PEAK_INTENSITY, dataSource);
@@ -339,6 +405,14 @@ public class DataAccessReader extends PrideDataReader {
     protected void reading() {
         for (int i = 0; i < 6; i++) {
             peptidesDomain[i] = i + 1.0;
+        }
+
+        //If mzTab and contains quantitation data
+        if(controller.getType().equals(DataAccessController.Type.MZTAB) && controller.hasQuantData()){
+            for(Comparable idStudyVariable: controller.getStudyVariables().keySet()){
+                variables.put(idStudyVariable, controller.getStudyVariables().get(idStudyVariable).getDescription());
+                variablesStudy.put(idStudyVariable, new ArrayList<Double>());
+            }
         }
 
         for (int i = 0; i < 5; i++) {
@@ -358,7 +432,11 @@ public class DataAccessReader extends PrideDataReader {
 
         Protein protein;
         List<Peptide> peptideList;
+
+        Map<Comparable, Tuple<Boolean, Boolean>> spectrumDecoy = new HashMap<Comparable, Tuple<Boolean, Boolean>>();
+
         for (Comparable proteinId : controller.getProteinIds()) {
+
             protein = controller.getProteinById(proteinId);
             peptideList = protein.getPeptides();
             // fill peptides per protein
@@ -388,9 +466,37 @@ public class DataAccessReader extends PrideDataReader {
                 } else {
                     missedBars[4]++;
                 }
+                if(controller.hasDecoyInformation() && controller.hasSpectrum()){
+                    Comparable id = controller.getSpectrumIdForPeptide(peptide.getSpectrumIdentification().getId());
+                    if(id != null){
+                        Tuple<Boolean, Boolean> status = new Tuple<Boolean, Boolean>(false,false);
+                        if(spectrumDecoy.containsKey(id))
+                            status = spectrumDecoy.get(id);
+                        if (peptide.getPeptideEvidence().isDecoy()){
+                            status.setValue(true);
+                        }else{
+                            status.setKey(true);
+                        }
+                        spectrumDecoy.put(id,status);
+                    }
+                }
+            }
+
+            //If mzTab and contains quantitation data
+            if(controller.getType().equals(DataAccessController.Type.MZTAB) && controller.hasQuantData()){
+                List<QuantPeptide> quantPeptides = controller.getProteinById(proteinId).getQuantPeptides();
+                for(QuantPeptide peptide: quantPeptides){
+                    QuantScore quantScore = peptide.getQuantScore();
+                    for(Comparable studyValueKey: quantScore.getStudyVariableScores().keySet()){
+                        if(quantScore.getStudyVariableScores().get(studyValueKey) != null){
+                            variablesStudy.get(studyValueKey).add(quantScore.getStudyVariableScores().get(studyValueKey));
+                        }
+                    }
+                }
             }
 
         }
+
 
         // spectrum level statistics.
         Integer preCharge;
@@ -405,15 +511,15 @@ public class DataAccessReader extends PrideDataReader {
         for (Comparable spectrumId : controller.getSpectrumIds()) {
             noSpectra = false;
             spectrum = controller.getSpectrumById(spectrumId);
-            peptide = spectrum.getPeptide();
+            List<Peptide> peptides = spectrum.getPeptide();
 
             // precursor charge and mass.
-            if (peptide == null) {
+            if (peptides == null) {
                 preCharge = DataAccessUtilities.getPrecursorCharge(spectrum.getPrecursors());
                 preMZ = DataAccessUtilities.getPrecursorMz(spectrum);
             } else {
-                preCharge = peptide.getPrecursorCharge();
-                preMZ = peptide.getPrecursorMz();
+                preCharge = peptides.get(0).getPrecursorCharge();
+                preMZ = peptides.get(0).getPrecursorMz();
             }
             // Charge State must be less than 8, but some files can have the annotation wrong
             if (preCharge != null && preCharge < 8 && controller.isIdentifiedSpectrum(spectrumId)) {
@@ -426,7 +532,6 @@ public class DataAccessReader extends PrideDataReader {
                         controller.isIdentifiedSpectrum(spectrumId) ? PrideDataType.IDENTIFIED_SPECTRA : PrideDataType.UNIDENTIFIED_SPECTRA
                 ));
             }
-
             if (controller.isIdentifiedSpectrum(spectrumId)) {
                 identifiedSpectraSize++;
                 dataType = PrideDataType.IDENTIFIED_SPECTRA;
@@ -442,8 +547,18 @@ public class DataAccessReader extends PrideDataReader {
 
                 for (double v : spectrum.getIntensityBinaryDataArray().getDoubleArray()) {
                     peaksIntensityList.add(new PrideData(v, dataType));
+                    if(controller.hasDecoyInformation()){
+                        if(spectrumDecoy.containsKey(spectrum.getId())){
+                            Tuple<Boolean, Boolean> status = spectrumDecoy.get(spectrumId);
+                            if(status.getKey())
+                                peaksIntensityList.add(new PrideData(v, PrideDataType.IDENTIFIED_TARGET));
+                            if(status.getValue())
+                                peaksIntensityList.add(new PrideData(v, PrideDataType.IDENTIFIED_DECOY));
+                        }
+                    }
                 }
             }
+
         }
 
         // release memory.
@@ -491,6 +606,7 @@ public class DataAccessReader extends PrideDataReader {
         readAvg(avgDataSource);
         readPeakMS(peaksMSList);
         readPeakIntensity(peaksIntensityList);
+        readQuantitation(variables, variablesStudy);
     }
 
     @Override

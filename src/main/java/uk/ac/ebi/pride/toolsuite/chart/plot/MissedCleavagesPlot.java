@@ -18,12 +18,14 @@ import java.util.TreeMap;
  * Date: 14/06/13
  */
 public class MissedCleavagesPlot extends PrideXYPlot {
+
     public MissedCleavagesPlot(XYDataset dataset) {
         this(dataset, true);
     }
 
     public MissedCleavagesPlot(XYDataset dataset, boolean smallPlot) {
-        super(PrideChartType.MISSED_CLEAVAGES, new XYBarDataset(dataset, 0.5), new XYBarRenderer(), smallPlot);
+
+        super(PrideChartType.MISSED_CLEAVAGES, new XYBarDataset(dataset, 0.2), new XYBarRenderer(), smallPlot);
 
         setDomainZeroBaselineVisible(false);
 
