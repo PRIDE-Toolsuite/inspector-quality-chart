@@ -28,7 +28,7 @@ public class PrideChartFactory {
         PrideXYPlot plot;
         switch (type) {
             case DELTA_MASS:
-                plot = new DeltaMZPlot(PrideDatasetFactory.getXYDataset(dataSource));
+                plot = new DeltaMZPlot(PrideDatasetFactory.getXYDataset(dataSource), PrideDataType.IDENTIFIED_SPECTRA);
                 break;
             case PEPTIDES_PROTEIN:
                 plot = new PeptidesProteinPlot(PrideDatasetFactory.getXYDataset(dataSource));

@@ -127,25 +127,59 @@ public class DataAccessReader extends PrideDataReader {
         dataSource.appendBins(dataSource.generateBins(-DELTA_BIN_COUNT * binWidth, binWidth, DELTA_BIN_COUNT * 2));
 
         SortedMap<PrideDataType, SortedMap<PrideHistogramBin, Integer>> histogramMap = dataSource.getHistogramMap();
-        SortedMap<PrideHistogramBin, Integer> histogram;
+
+        SortedMap<PrideHistogramBin, Integer> identhistogram;
         int maxFreq = 0;
 
-        histogram = histogramMap.get(PrideDataType.IDENTIFIED_SPECTRA);
-        for (Integer size : histogram.values()) {
+        identhistogram = histogramMap.get(PrideDataType.IDENTIFIED_SPECTRA);
+        for (Integer size : identhistogram.values()) {
             if (size > maxFreq) {
                 maxFreq = size;
             }
         }
         double relativeFreq;
         for(PrideDataType dataType: histogramMap.keySet()){
-            histogram = histogramMap.get(dataType);
-            for (PrideHistogramBin bin : histogram.keySet()) {
+            identhistogram = histogramMap.get(dataType);
+            for (PrideHistogramBin bin : identhistogram.keySet()) {
                 deltaDomain.add(bin.getStartBoundary());
-                relativeFreq = maxFreq == 0 ? 0 : histogram.get(bin) * 1.0d / maxFreq;
+                relativeFreq = maxFreq == 0 ? 0 : identhistogram.get(bin) * 1.0d / maxFreq;
                 deltaRange.add(new PrideData(relativeFreq, dataType));
             }
         }
 
+        SortedMap<PrideHistogramBin, Integer> targethistogram;
+        int targetmaxFreq = 0;
+
+        targethistogram = histogramMap.get(PrideDataType.IDENTIFIED_TARGET);
+        for (Integer size : targethistogram.values()) {
+            if (size > targetmaxFreq) {
+                targetmaxFreq = size;
+            }
+        }
+
+        double targetFreq;
+        for (PrideHistogramBin bin : targethistogram.keySet()) {
+                deltaDomain.add(bin.getStartBoundary());
+                targetFreq = targetmaxFreq == 0 ? 0 : targethistogram.get(bin) * 1.0d / targetmaxFreq;
+                deltaRange.add(new PrideData(targetFreq, PrideDataType.IDENTIFIED_TARGET));
+        }
+
+        SortedMap<PrideHistogramBin, Integer> decoyHistogram;
+        int decoymaxFreq = 0;
+
+        decoyHistogram = histogramMap.get(PrideDataType.IDENTIFIED_DECOY);
+        for (Integer size : decoyHistogram.values()) {
+            if (size > decoymaxFreq) {
+                decoymaxFreq = size;
+            }
+        }
+
+        double decoyFreq;
+        for (PrideHistogramBin bin : decoyHistogram.keySet()) {
+            deltaDomain.add(bin.getStartBoundary());
+            decoyFreq = decoymaxFreq == 0 ? 0 : decoyHistogram.get(bin) * 1.0d / decoymaxFreq;
+            deltaRange.add(new PrideData(decoyFreq, PrideDataType.IDENTIFIED_DECOY));
+        }
 
         for (int i = 0; i < deltaRange.size(); i++) {
             if (deltaRange.get(i).getData() == null) {
@@ -487,6 +521,14 @@ public class DataAccessReader extends PrideDataReader {
                 deltaMZ = calcDeltaMZ(peptide);
                 if (deltaMZ != null) {
                     deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_SPECTRA));
+                    if(controller.hasDecoyInformation()){
+                        if(peptide.getPeptideEvidence().isDecoy()){
+                            deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_DECOY));
+                        }else{
+                            deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_TARGET));
+                        }
+                    }
+
                 }
 
                 // fill missed cleavages

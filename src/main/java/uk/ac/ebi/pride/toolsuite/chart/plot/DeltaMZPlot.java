@@ -18,11 +18,15 @@ import java.util.TreeMap;
  * Date: 12/06/13
  */
 public class DeltaMZPlot extends PrideXYPlot {
-    public DeltaMZPlot(XYDataset dataset) {
-        this(dataset, new XYLineAndShapeRenderer(true, false), true);
+
+    private XYDataset dataset;
+
+    public DeltaMZPlot(XYDataset dataset, PrideDataType datatype) {
+        this(dataset, new XYLineAndShapeRenderer(true, false), true, datatype);
     }
 
-    public DeltaMZPlot(XYDataset dataset, XYItemRenderer renderer, boolean smallPlot) {
+    public DeltaMZPlot(XYDataset dataset, XYItemRenderer renderer, boolean smallPlot, PrideDataType dataType) {
+
         super(PrideChartType.DELTA_MASS, dataset, renderer, smallPlot);
 
         setDomainZeroBaselineVisible(true);
@@ -39,15 +43,55 @@ public class DeltaMZPlot extends PrideXYPlot {
         NumberAxis rangeAxis = (NumberAxis) getRangeAxis();
         rangeAxis.setAutoTickUnitSelection(false);
         rangeAxis.setTickUnit(new NumberTickUnit(0.25, new DecimalFormat("0.00")));
+
+        this.dataset = dataset;
+
+        // only display current data type series.
+        for (PrideDataType type : dataType.getChildren()) {
+            setVisible(false, type);
+        }
+        setVisible(true, dataType);
+    }
+
+    public void setVisible(boolean visible, PrideDataType dataType) {
+
+        XYItemRenderer renderer = (XYItemRenderer) getRenderer();
+
+        for (int i = 0; i < dataset.getSeriesCount(); i++) {
+            if (dataset.getSeriesKey(i).equals(PrideDataType.IDENTIFIED_SPECTRA)) {
+                renderer.setSeriesPaint(i, Color.RED);
+            }else if (dataset.getSeriesKey(i).equals(PrideDataType.IDENTIFIED_DECOY)) {
+                renderer.setSeriesPaint(i, Color.GREEN);
+            }else if (dataset.getSeriesKey(i).equals(PrideDataType.IDENTIFIED_TARGET)) {
+                renderer.setSeriesPaint(i, Color.CYAN);
+            }
+            if (dataset.getSeriesKey(i).equals(dataType.getTitle())) {
+                renderer.setSeriesVisible(i, visible);
+            }
+        }
     }
 
     @Override
     public Map<PrideDataType, Boolean> getOptionList() {
-        return new TreeMap<PrideDataType, Boolean>();
+        Map<PrideDataType, Boolean> optionList = new TreeMap<PrideDataType, Boolean>();
+
+        optionList.put(PrideDataType.IDENTIFIED_SPECTRA, false);
+        optionList.put(PrideDataType.IDENTIFIED_DECOY, false);
+        optionList.put(PrideDataType.IDENTIFIED_TARGET, false);
+
+        PrideDataType dataType;
+        for (int i=0; i < dataset.getSeriesCount(); i++) {
+            String key = (String) dataset.getSeriesKey(i);
+            dataType = PrideDataType.findBy(key);
+            optionList.put(dataType, true);
+        }
+
+        return optionList;
     }
 
     @Override
     public boolean isMultiOptional() {
-        return false;
+        return true;
     }
+
 }
