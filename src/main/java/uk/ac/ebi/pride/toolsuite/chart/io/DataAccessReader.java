@@ -312,7 +312,37 @@ public class DataAccessReader extends PrideDataReader {
         SortedMap<PrideDataType, SortedMap<PrideHistogramBin, Integer>> histogramMap = dataSource.getHistogramMap();
         SortedMap<PrideHistogramBin, Integer> idHistogram = histogramMap.get(PrideDataType.IDENTIFIED_SPECTRA);
         SortedMap<PrideHistogramBin, Integer> unHistogram = histogramMap.get(PrideDataType.UNIDENTIFIED_SPECTRA);
+        SortedMap<PrideHistogramBin, Integer> decoyHistogram = histogramMap.get(PrideDataType.IDENTIFIED_DECOY);
+        SortedMap<PrideHistogramBin, Integer> targetHistogram = histogramMap.get(PrideDataType.IDENTIFIED_TARGET);
         SortedMap<PrideHistogramBin, Integer> allHistogram = histogramMap.get(PrideDataType.ALL_SPECTRA);
+
+        int targetCount = 0;
+        if (targetHistogram != null) {
+            for (PrideHistogramBin bin : targetHistogram.keySet()) {
+                targetCount += targetHistogram.get(bin);
+            }
+            for (PrideHistogramBin bin : targetHistogram.keySet()) {
+                preMassesDomain.add(bin.getStartBoundary());
+                preMassesRange.add(new PrideData(
+                        targetHistogram.get(bin) * 1.0d / targetCount,
+                        PrideDataType.IDENTIFIED_TARGET
+                ));
+            }
+        }
+
+        int decoyCount = 0;
+        if (decoyHistogram != null) {
+            for (PrideHistogramBin bin : decoyHistogram.keySet()) {
+                decoyCount += decoyHistogram.get(bin);
+            }
+            for (PrideHistogramBin bin : decoyHistogram.keySet()) {
+                preMassesDomain.add(bin.getStartBoundary());
+                preMassesRange.add(new PrideData(
+                        decoyHistogram.get(bin) * 1.0d / decoyCount,
+                        PrideDataType.IDENTIFIED_DECOY
+                ));
+            }
+        }
 
         int identifiedCount = 0;
         if (idHistogram != null) {
@@ -531,6 +561,15 @@ public class DataAccessReader extends PrideDataReader {
                 preMassedList.add(new PrideData(preMZ * preCharge,
                         controller.isIdentifiedSpectrum(spectrumId) ? PrideDataType.IDENTIFIED_SPECTRA : PrideDataType.UNIDENTIFIED_SPECTRA
                 ));
+                if(controller.hasDecoyInformation()){
+                    if(spectrumDecoy.containsKey(spectrum.getId())){
+                        Tuple<Boolean, Boolean> status = spectrumDecoy.get(spectrumId);
+                        if(status.getKey())
+                            preMassedList.add(new PrideData(preMZ * preCharge, PrideDataType.IDENTIFIED_TARGET));
+                        if(status.getValue())
+                            preMassedList.add(new PrideData(preMZ * preCharge, PrideDataType.IDENTIFIED_DECOY));
+                    }
+                }
             }
             if (controller.isIdentifiedSpectrum(spectrumId)) {
                 identifiedSpectraSize++;

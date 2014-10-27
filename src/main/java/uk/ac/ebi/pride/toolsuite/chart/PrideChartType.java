@@ -7,7 +7,7 @@ package uk.ac.ebi.pride.toolsuite.chart;
 public enum PrideChartType {
     DELTA_MASS        ("Delta m/z",                    "Delta m/z",                                         "Experimental m/z - Theoretical m/z",    "Relative Frequency",  false),
     PEPTIDES_PROTEIN  ("Peptides per Protein",         "Number of Peptides Identified per Protein",         "Number of Peptides",                    "Frequency",           false),
-    MISSED_CLEAVAGES  ("Missed Typtic Cleavages",      "Number of Missed Typtic Cleavages",                 "Missed Cleavages",                      "Frequency",           false),
+    MISSED_CLEAVAGES  ("Missed Tryptic Cleavages",      "Number of Missed Tryptic Cleavages",               "Missed Cleavages",                      "Frequency",           false),
     AVERAGE_MS        ("Average MS/MS Spectrum",       "Average MS/MS Spectrum",                            "m/z",                                   "Intensity",           true),
     PRECURSOR_CHARGE  ("Precursor Ion Charge",         "Precursor Ion Charge Distribution",                 "Precursor Ion Charge",                  "Frequency",           true),
     PRECURSOR_MASSES  ("Precursor Ion Masses",         "Distribution of Precursor Ion Masses",              "Mass (Daltons)",                        "Relative Frequency",  true),

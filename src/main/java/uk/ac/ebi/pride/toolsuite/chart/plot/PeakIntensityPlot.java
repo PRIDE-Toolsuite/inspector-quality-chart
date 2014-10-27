@@ -52,10 +52,10 @@ public class PeakIntensityPlot extends PrideCategoryPlot {
             } else if (dataset.getRowKey(i).equals(PrideDataType.IDENTIFIED_SPECTRA)) {
                 renderer.setSeriesPaint(i, Color.RED);
             } else if (dataset.getRowKey(i).equals(PrideDataType.UNIDENTIFIED_SPECTRA)) {
-                renderer.setSeriesPaint(i, Color.GREEN);
-            }else if (dataset.getRowKey(i).equals(PrideDataType.IDENTIFIED_DECOY)) {
                 renderer.setSeriesPaint(i, Color.BLACK);
             }else if (dataset.getRowKey(i).equals(PrideDataType.IDENTIFIED_DECOY)) {
+                renderer.setSeriesPaint(i, Color.GREEN);
+            }else if (dataset.getRowKey(i).equals(PrideDataType.IDENTIFIED_TARGET)) {
                 renderer.setSeriesPaint(i, Color.CYAN);
             }
             if (dataset.getRowKey(i).equals(dataType.getTitle())) {

@@ -81,9 +81,11 @@ public class PrecursorMassesPlot extends PrideXYPlot {
     public Map<PrideDataType, Boolean> getOptionList() {
         Map<PrideDataType, Boolean> optionList = new TreeMap<PrideDataType, Boolean>();
 
-        optionList.put(PrideDataType.IDENTIFIED_SPECTRA, false);
-        optionList.put(PrideDataType.UNIDENTIFIED_SPECTRA, false);
         optionList.put(PrideDataType.ALL_SPECTRA, false);
+        optionList.put(PrideDataType.IDENTIFIED_SPECTRA, false);
+        optionList.put(PrideDataType.IDENTIFIED_TARGET, false);
+        optionList.put(PrideDataType.IDENTIFIED_DECOY, false);
+        optionList.put(PrideDataType.UNIDENTIFIED_SPECTRA, false);
 
         PrideDataType dataType;
         for (XYSeries series : spectraSeriesList) {
@@ -204,10 +206,16 @@ public class PrecursorMassesPlot extends PrideXYPlot {
             renderer.setSeriesShapesVisible(i, false);
             seriesKey = (String) getDataset().getSeriesKey(i);
 
-            if (seriesKey.equals(PrideDataType.IDENTIFIED_SPECTRA.getTitle()) ||
-                    seriesKey.equals(PrideDataType.UNIDENTIFIED_SPECTRA.getTitle()) ||
-                    seriesKey.equals(PrideDataType.ALL_SPECTRA.getTitle())) {
-                color = Color.RED;
+            if (seriesKey.equals(PrideDataType.ALL_SPECTRA.getTitle())) {
+                    color = Color.BLUE;
+            } else if (seriesKey.equals(PrideDataType.IDENTIFIED_SPECTRA.getTitle())) {
+                    color = Color.RED;
+            } else if (seriesKey.equals(PrideDataType.UNIDENTIFIED_SPECTRA.getTitle())) {
+                    color = Color.BLACK;
+            }else if (seriesKey.equals(PrideDataType.IDENTIFIED_DECOY.getTitle())) {
+                    color = Color.GREEN;
+            }else if (seriesKey.equals(PrideDataType.IDENTIFIED_TARGET.getTitle())) {
+                    color = Color.CYAN;
             } else if (seriesKey.equals(QuartilesType.HUMAN.getReference())) {
                 color = new Color(70,130,180);
             } else if (seriesKey.equals(QuartilesType.MOUSE.getReference())) {
@@ -220,7 +228,6 @@ public class PrecursorMassesPlot extends PrideXYPlot {
                 // setting QuartilesType.NONE color
                 color = Color.WHITE;
             }
-
             renderer.setSeriesPaint(i, color);
         }
 
