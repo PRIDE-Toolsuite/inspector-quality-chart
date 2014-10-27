@@ -42,8 +42,8 @@ public class DataAccessReader extends PrideDataReader {
     private Double[] peptidesDomain = new Double[6];
     private PrideData[] peptidesRange = new PrideData[6];
 
-    private Double[] missedDomain = new Double[5];
-    private PrideData[] missedRange = new PrideData[5];
+    private List<Double> missedDomain = new ArrayList<Double>();
+    private List<PrideData> missedRange = new ArrayList<PrideData>();
 
     private Double[] preChargeDomain = new Double[8];
     private PrideData[] preChargeRange = new PrideData[8];
@@ -213,8 +213,8 @@ public class DataAccessReader extends PrideDataReader {
         ));
     }
 
-    private void readMissed(int[] missedBars) {
-        PrideDataType dataType = PrideDataType.ALL_SPECTRA;
+    private void readMissed(int[] missedBars, int[] decoyMissedBar, int[] tarjetMissedBar, boolean hasDecoyInformation) {
+        PrideDataType dataType = PrideDataType.IDENTIFIED_SPECTRA;
 
         if (noPeptide) {
             errorMap.put(PrideChartType.MISSED_CLEAVAGES, new PrideDataException(PrideDataException.NO_PEPTIDE));
@@ -222,12 +222,25 @@ public class DataAccessReader extends PrideDataReader {
         }
 
         for (int i = 0; i < missedBars.length; i++) {
-            missedRange[i] = new PrideData(missedBars[i] + 0.0, PrideDataType.ALL_SPECTRA);
+            missedRange.add(new PrideData(missedBars[i] + 0.0, PrideDataType.IDENTIFIED_SPECTRA));
+            missedDomain.add(i + 0.0);
+        }
+
+        if(hasDecoyInformation){
+            for (int i = 0; i < decoyMissedBar.length; i++) {
+                missedRange.add(new PrideData(decoyMissedBar[i] + 0.0, PrideDataType.IDENTIFIED_DECOY));
+                missedDomain.add(i + 0.0);
+            }
+
+            for (int i = 0; i < tarjetMissedBar.length; i++) {
+                missedRange.add(new PrideData(tarjetMissedBar[i] + 0.0, PrideDataType.IDENTIFIED_TARGET));
+                missedDomain.add(i + 0.0);
+            }
         }
 
         xyDataSourceMap.put(PrideChartType.MISSED_CLEAVAGES, new PrideXYDataSource(
-                missedDomain,
-                missedRange,
+                missedDomain.toArray(new Double[missedDomain.size()]),
+                missedRange.toArray(new PrideData[missedRange.size()]),
                 dataType
         ));
     }
@@ -479,9 +492,9 @@ public class DataAccessReader extends PrideDataReader {
             }
         }
 
-        for (int i = 0; i < 5; i++) {
+        /*for (int i = 0; i < 5; i++) {
             missedDomain[i] = i + 0.0;
-        }
+        }*/
 
         for (int i = 0; i < 8; i++) {
             preChargeDomain[i] = i + 1.0;
@@ -489,6 +502,8 @@ public class DataAccessReader extends PrideDataReader {
 
         int[] peptideBars = new int[6];
         int[] missedBars = new int[5];
+        int[] decoyMissedBar  = new int[5];
+        int[] targetMissedBar = new int[5];
         int[] preChargeBars = new int[8];
 
         List<PrideData> deltaMZList = new ArrayList<PrideData>();
@@ -535,8 +550,19 @@ public class DataAccessReader extends PrideDataReader {
                 missedCleavages = calcMissedCleavages(peptide);
                 if (missedCleavages < 4) {
                     missedBars[missedCleavages]++;
+                    if(controller.hasDecoyInformation())
+                        if(peptide.getPeptideEvidence().isDecoy())
+                            decoyMissedBar[missedCleavages]++;
+                        else
+                            targetMissedBar[missedCleavages]++;
+
                 } else {
                     missedBars[4]++;
+                    if(controller.hasDecoyInformation())
+                        if(peptide.getPeptideEvidence().isDecoy())
+                            decoyMissedBar[4]++;
+                        else
+                            targetMissedBar[4]++;
                 }
                 if(controller.hasDecoyInformation() && controller.hasSpectrum()){
                     Comparable id = controller.getSpectrumIdForPeptide(peptide.getSpectrumIdentification().getId());
@@ -642,6 +668,7 @@ public class DataAccessReader extends PrideDataReader {
 
         }
 
+        boolean hasDecoyInformation = controller.hasDecoyInformation();
         // release memory.
         controller = null;
 
@@ -679,7 +706,7 @@ public class DataAccessReader extends PrideDataReader {
 
         readPeptide(peptideBars);
         readDelta(deltaMZList);
-        readMissed(missedBars);
+        readMissed(missedBars, decoyMissedBar, targetMissedBar, hasDecoyInformation);
 
         readPreCharge(preChargeBars);
         readPreMasses(preMassedList);

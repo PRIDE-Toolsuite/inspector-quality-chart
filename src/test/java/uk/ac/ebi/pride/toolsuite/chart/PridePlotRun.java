@@ -61,7 +61,7 @@ public class PridePlotRun {
                 break;
             case MISSED_CLEAVAGES:
                 dataSource = new PrideXYDataSource(domainData, rangeData, PrideDataType.ALL_SPECTRA);
-                plot = new MissedCleavagesPlot(PrideDatasetFactory.getXYDataset(dataSource));
+                plot = new MissedCleavagesPlot(PrideDatasetFactory.getXYDataset(dataSource), PrideDataType.IDENTIFIED_SPECTRA);
                 break;
             case AVERAGE_MS:
                 dataSource = new PrideXYDataSource(domainData, rangeData, PrideDataType.ALL_SPECTRA);

@@ -34,7 +34,7 @@ public class PrideChartFactory {
                 plot = new PeptidesProteinPlot(PrideDatasetFactory.getXYDataset(dataSource));
                 break;
             case MISSED_CLEAVAGES:
-                plot = new MissedCleavagesPlot(PrideDatasetFactory.getXYDataset(dataSource));
+                plot = new MissedCleavagesPlot(PrideDatasetFactory.getXYDataset(dataSource), PrideDataType.IDENTIFIED_SPECTRA);
                 break;
             case PRECURSOR_CHARGE:
                 plot = new PrecursorChargePlot(PrideDatasetFactory.getXYDataset(dataSource));
