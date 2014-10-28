@@ -131,7 +131,8 @@ public class PrideHistogramDataSource implements PrideDataSource {
         SortedMap<PrideHistogramBin, Integer> decoyHistogram;
 
         SortedMap<PrideHistogramBin, Integer> allHistogram = createEmptyHistogram();
-        histMap.put(PrideDataType.ALL_SPECTRA, allHistogram);
+        if(dataTypeList.contains(PrideDataType.ALL_SPECTRA) || calcAllSpectra)
+            histMap.put(PrideDataType.ALL_SPECTRA, allHistogram);
 
         for (PrideData d : values) {
             for (PrideHistogramBin bin : bins) {

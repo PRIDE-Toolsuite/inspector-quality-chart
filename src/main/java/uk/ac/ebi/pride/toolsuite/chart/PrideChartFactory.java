@@ -33,9 +33,6 @@ public class PrideChartFactory {
             case PEPTIDES_PROTEIN:
                 plot = new PeptidesProteinPlot(PrideDatasetFactory.getXYDataset(dataSource));
                 break;
-            case MISSED_CLEAVAGES:
-                plot = new MissedCleavagesPlot(PrideDatasetFactory.getXYDataset(dataSource), PrideDataType.IDENTIFIED_SPECTRA);
-                break;
             case PRECURSOR_CHARGE:
                 plot = new PrecursorChargePlot(PrideDatasetFactory.getXYDataset(dataSource));
                 break;
@@ -54,6 +51,11 @@ public class PrideChartFactory {
         return new AverageMSPlot(PrideDatasetFactory.getXYDataset((PrideSpectrumHistogramDataSource) dataSource), PrideDataType.ALL_SPECTRA);
     }
 
+    public static MissedCleavagesPlot getMissChart(PrideHistogramDataSource dataSource) {
+
+        return new MissedCleavagesPlot(PrideDatasetFactory.getHistogramDataset(dataSource), PrideDataType.IDENTIFIED_SPECTRA);
+    }
+
     public static PrideCategoryPlot getHistogramPlot(PrideHistogramDataSource dataSource, PrideChartType type) {
         if (dataSource == null) {
             return null;
@@ -65,6 +67,9 @@ public class PrideChartFactory {
                 break;
             case PEAK_INTENSITY:
                 plot = new PeakIntensityPlot(PrideDatasetFactory.getHistogramDataset(dataSource), PrideDataType.ALL_SPECTRA);
+                break;
+            case MISSED_CLEAVAGES:
+                plot = new MissedCleavagesPlot(PrideDatasetFactory.getHistogramDataset(dataSource), PrideDataType.IDENTIFIED_SPECTRA);
                 break;
 
             default:
@@ -78,7 +83,6 @@ public class PrideChartFactory {
         if (dataSource == null) {
             return null;
         }
-
        QuantitationChart plot;
         switch (type) {
             case QUANTITATION_PEPTIDES:
@@ -90,8 +94,6 @@ public class PrideChartFactory {
 
         return plot;
     }
-
-
 
     public static JFreeChart getChart(PrideCategoryPlot plot) {
         if (plot == null) {
@@ -137,7 +139,9 @@ public class PrideChartFactory {
         if (histogramDataSource != null) {
             if (chartType == PrideChartType.AVERAGE_MS) {
                 return getChart(getAvgPlot(histogramDataSource));
-            } else {
+            } else if(chartType == PrideChartType.MISSED_CLEAVAGES){
+                return getChart(getMissChart(histogramDataSource));
+            }else {
                 return getChart(getHistogramPlot(histogramDataSource, chartType));
             }
         }

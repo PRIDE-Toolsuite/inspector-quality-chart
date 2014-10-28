@@ -1,12 +1,15 @@
 package uk.ac.ebi.pride.toolsuite.chart.plot;
 
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.xy.XYBarDataset;
 import org.jfree.data.xy.XYDataset;
 import uk.ac.ebi.pride.toolsuite.chart.PrideChartType;
 import uk.ac.ebi.pride.toolsuite.chart.dataset.PrideDataType;
 import uk.ac.ebi.pride.toolsuite.chart.plot.axis.PrideNumberTickUnit;
+import uk.ac.ebi.pride.toolsuite.chart.plot.label.CategoryPercentageLabel;
 import uk.ac.ebi.pride.toolsuite.chart.plot.label.XYPercentageLabel;
 
 import java.awt.*;
@@ -18,34 +21,25 @@ import java.util.TreeMap;
  * @author qingwei
  * Date: 14/06/13
  */
-public class MissedCleavagesPlot extends PrideXYPlot {
+public class MissedCleavagesPlot extends PrideCategoryPlot {
 
-    XYDataset dataset;
+    CategoryDataset dataset;
 
-    public MissedCleavagesPlot(XYDataset dataset, PrideDataType dataType) {
+    public MissedCleavagesPlot(CategoryDataset dataset, PrideDataType dataType) {
         this(dataset, true, dataType);
     }
 
-    public MissedCleavagesPlot(XYDataset dataset, boolean smallPlot, PrideDataType dataType) {
+    public MissedCleavagesPlot(CategoryDataset dataset, boolean smallPlot, PrideDataType dataType) {
 
-        super(PrideChartType.MISSED_CLEAVAGES, new XYBarDataset(dataset, 0.2), new XYBarRenderer(), smallPlot);
-
+        super(PrideChartType.MISSED_CLEAVAGES, dataset, smallPlot);
         this.dataset = dataset;
 
-        setDomainZeroBaselineVisible(false);
-
-        XYBarRenderer renderer = (XYBarRenderer) getRenderer();
-        renderer.setBaseItemLabelGenerator(new XYPercentageLabel());
+        BarRenderer renderer = (BarRenderer) getRenderer();
+        renderer.setMaximumBarWidth(0.1);
+        renderer.setBaseItemLabelGenerator(new CategoryPercentageLabel());
         renderer.setBaseItemLabelsVisible(true);
 
-        NumberAxis domainAxis = (NumberAxis) getDomainAxis();
-        PrideNumberTickUnit unit = new PrideNumberTickUnit(1, new DecimalFormat("0"));
-        int barCount = dataset.getItemCount(0);
-        unit.setMaxValue(barCount - 2);
-        domainAxis.setTickUnit(unit);
-
-        NumberAxis rangeAxis = (NumberAxis) getRangeAxis();
-        rangeAxis.setMinorTickCount(barCount);
+        this.dataset = dataset;
 
         // only display current data type series.
         for (PrideDataType type : dataType.getChildren()) {
@@ -55,22 +49,20 @@ public class MissedCleavagesPlot extends PrideXYPlot {
     }
 
     public void setVisible(boolean visible, PrideDataType dataType) {
+        BarRenderer renderer = (BarRenderer) getRenderer();
 
-        XYBarRenderer renderer = (XYBarRenderer) getRenderer();
-
-        for (int i = 0; i < dataset.getSeriesCount(); i++) {
-            if (dataset.getSeriesKey(i).equals(PrideDataType.IDENTIFIED_SPECTRA)) {
+        for (int i = 0; i < dataset.getRowCount(); i++) {
+            if (dataset.getRowKey(i).equals(PrideDataType.IDENTIFIED_SPECTRA)) {
                 renderer.setSeriesPaint(i, Color.RED);
-            }else if (dataset.getSeriesKey(i).equals(PrideDataType.IDENTIFIED_DECOY)) {
+            } else if (dataset.getRowKey(i).equals(PrideDataType.IDENTIFIED_DECOY)) {
                 renderer.setSeriesPaint(i, Color.GREEN);
-            }else if (dataset.getSeriesKey(i).equals(PrideDataType.IDENTIFIED_TARGET)) {
+            }else if (dataset.getRowKey(i).equals(PrideDataType.IDENTIFIED_TARGET)) {
                 renderer.setSeriesPaint(i, Color.CYAN);
             }
-            if (dataset.getSeriesKey(i).equals(dataType.getTitle())) {
+            if (dataset.getRowKey(i).equals(dataType.getTitle())) {
                 renderer.setSeriesVisible(i, visible);
             }
         }
-
     }
 
     @Override
@@ -82,9 +74,8 @@ public class MissedCleavagesPlot extends PrideXYPlot {
         optionList.put(PrideDataType.IDENTIFIED_TARGET, false);
 
         PrideDataType dataType;
-        for (int i=0; i < dataset.getSeriesCount(); i++) {
-            String key = (String) dataset.getSeriesKey(i);
-            dataType = PrideDataType.findBy(key);
+        for (Object key : dataset.getRowKeys()) {
+            dataType = PrideDataType.findBy((String) key);
             optionList.put(dataType, true);
         }
 

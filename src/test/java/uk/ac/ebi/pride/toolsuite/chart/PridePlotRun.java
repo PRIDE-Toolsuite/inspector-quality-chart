@@ -59,10 +59,6 @@ public class PridePlotRun {
                 dataSource = new PrideXYDataSource(domainData, rangeData, PrideDataType.ALL_SPECTRA);
                 plot = new PeptidesProteinPlot(PrideDatasetFactory.getXYDataset(dataSource));
                 break;
-            case MISSED_CLEAVAGES:
-                dataSource = new PrideXYDataSource(domainData, rangeData, PrideDataType.ALL_SPECTRA);
-                plot = new MissedCleavagesPlot(PrideDatasetFactory.getXYDataset(dataSource), PrideDataType.IDENTIFIED_SPECTRA);
-                break;
             case AVERAGE_MS:
                 dataSource = new PrideXYDataSource(domainData, rangeData, PrideDataType.ALL_SPECTRA);
                 plot = new AverageMSPlot(PrideDatasetFactory.getXYDataset(dataSource), PrideDataType.UNIDENTIFIED_SPECTRA);
@@ -105,6 +101,11 @@ public class PridePlotRun {
                 dataSource = new PrideEqualWidthHistogramDataSource(data, false);
                 dataSource.appendBins(((PrideEqualWidthHistogramDataSource)dataSource).generateBins(0, 400, 8));
                 plot = new PeaksMSPlot(PrideDatasetFactory.getHistogramDataset(dataSource), PrideDataType.ALL_SPECTRA);
+                break;
+            case MISSED_CLEAVAGES:
+                dataSource = new PrideEqualWidthHistogramDataSource(data, false);
+                dataSource.appendBins(((PrideEqualWidthHistogramDataSource)dataSource).generateBins(0, 1, 4));
+                plot = new MissedCleavagesPlot(PrideDatasetFactory.getHistogramDataset(dataSource), PrideDataType.IDENTIFIED_SPECTRA);
                 break;
             case PEAK_INTENSITY:
                 dataSource = new PrideHistogramDataSource(data, true);

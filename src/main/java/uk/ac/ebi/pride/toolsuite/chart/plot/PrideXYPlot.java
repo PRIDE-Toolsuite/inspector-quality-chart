@@ -11,6 +11,7 @@ import java.awt.*;
 
 /**
  * @author qingwei
+ * @author ypriverol
  * Date: 12/06/13
  */
 public abstract class PrideXYPlot extends XYPlot implements PridePlot {
