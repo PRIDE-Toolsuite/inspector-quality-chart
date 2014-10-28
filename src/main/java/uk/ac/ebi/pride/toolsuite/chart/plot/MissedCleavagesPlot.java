@@ -35,7 +35,7 @@ public class MissedCleavagesPlot extends PrideCategoryPlot {
         this.dataset = dataset;
 
         BarRenderer renderer = (BarRenderer) getRenderer();
-        renderer.setMaximumBarWidth(0.1);
+        renderer.setMaximumBarWidth(0.08);
         renderer.setBaseItemLabelGenerator(new CategoryPercentageLabel());
         renderer.setBaseItemLabelsVisible(true);
 

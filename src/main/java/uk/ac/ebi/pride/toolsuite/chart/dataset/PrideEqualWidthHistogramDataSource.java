@@ -6,6 +6,7 @@ import java.util.*;
 
 /**
  * @author qingwei
+ * @author ypriverol
  * Date: 20/06/13
  */
 public class PrideEqualWidthHistogramDataSource extends PrideHistogramDataSource {

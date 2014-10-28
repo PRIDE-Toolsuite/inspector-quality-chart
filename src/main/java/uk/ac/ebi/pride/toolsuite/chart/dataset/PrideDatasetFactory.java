@@ -4,6 +4,7 @@ import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import uk.ac.ebi.pride.toolsuite.chart.PrideChartType;
 import uk.ac.ebi.pride.toolsuite.chart.io.PrideSpectrumHistogramDataSource;
 
 import java.text.DecimalFormat;
@@ -67,7 +68,7 @@ public class PrideDatasetFactory {
         return dataset;
     }
 
-    public static CategoryDataset getHistogramDataset(PrideHistogramDataSource dataSource) {
+    public static CategoryDataset getHistogramDataset(PrideHistogramDataSource dataSource, PrideChartType prideChartType) {
         SortedMap<PrideDataType, SortedMap<PrideHistogramBin, Integer>> histogramMap = dataSource.getHistogramMap();
 
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
@@ -79,7 +80,10 @@ public class PrideDatasetFactory {
             histogram = histogramMap.get(dataType);
             seriesKey = dataType.getTitle();
             for (PrideHistogramBin bin : histogram.keySet()) {
-                category = bin.getEndBoundary() == Integer.MAX_VALUE ? ">" + bin.getStartBoundary() : bin.toString(new DecimalFormat("#"));
+                if(prideChartType == PrideChartType.MISSED_CLEAVAGES)
+                    category = bin.toString(true);
+                 else
+                    category = bin.getEndBoundary() == Integer.MAX_VALUE ? ">" + bin.getStartBoundary() : bin.toString(new DecimalFormat("#"));
                 dataset.addValue(histogram.get(bin), seriesKey, category);
             }
         }

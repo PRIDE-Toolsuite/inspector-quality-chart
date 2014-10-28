@@ -53,7 +53,7 @@ public class PrideChartFactory {
 
     public static MissedCleavagesPlot getMissChart(PrideHistogramDataSource dataSource) {
 
-        return new MissedCleavagesPlot(PrideDatasetFactory.getHistogramDataset(dataSource), PrideDataType.IDENTIFIED_SPECTRA);
+        return new MissedCleavagesPlot(PrideDatasetFactory.getHistogramDataset(dataSource, PrideChartType.MISSED_CLEAVAGES), PrideDataType.IDENTIFIED_SPECTRA);
     }
 
     public static PrideCategoryPlot getHistogramPlot(PrideHistogramDataSource dataSource, PrideChartType type) {
@@ -63,13 +63,13 @@ public class PrideChartFactory {
         PrideCategoryPlot plot;
         switch (type) {
             case PEAKS_MS:
-                plot = new PeaksMSPlot(PrideDatasetFactory.getHistogramDataset(dataSource), PrideDataType.ALL_SPECTRA);
+                plot = new PeaksMSPlot(PrideDatasetFactory.getHistogramDataset(dataSource, PrideChartType.PEAKS_MS), PrideDataType.ALL_SPECTRA);
                 break;
             case PEAK_INTENSITY:
-                plot = new PeakIntensityPlot(PrideDatasetFactory.getHistogramDataset(dataSource), PrideDataType.ALL_SPECTRA);
+                plot = new PeakIntensityPlot(PrideDatasetFactory.getHistogramDataset(dataSource, PrideChartType.PEAK_INTENSITY), PrideDataType.ALL_SPECTRA);
                 break;
             case MISSED_CLEAVAGES:
-                plot = new MissedCleavagesPlot(PrideDatasetFactory.getHistogramDataset(dataSource), PrideDataType.IDENTIFIED_SPECTRA);
+                plot = new MissedCleavagesPlot(PrideDatasetFactory.getHistogramDataset(dataSource, PrideChartType.MISSED_CLEAVAGES), PrideDataType.IDENTIFIED_SPECTRA);
                 break;
 
             default:

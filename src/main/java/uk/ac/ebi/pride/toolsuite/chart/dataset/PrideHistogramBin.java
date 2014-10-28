@@ -162,4 +162,9 @@ public class PrideHistogramBin implements Cloneable, Serializable, Comparable<Pr
     public String toString(DecimalFormat format) {
         return format.format(startBoundary) + "-" + format.format(endBoundary);
     }
+
+    public String toString(boolean startBoundary){
+        int value = (int) Math.round(this.startBoundary);
+        return (startBoundary)?Integer.toString(value):this.toString();
+    }
 }
