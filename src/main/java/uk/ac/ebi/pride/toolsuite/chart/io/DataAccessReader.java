@@ -457,6 +457,7 @@ public class DataAccessReader extends PrideDataReader {
         dataSource.appendBins(dataSource.generateGranularityBins(0d, 10, 50));
 
         histogramDataSourceMap.put(PrideChartType.PEAKS_MS, dataSource);
+
     }
 
     private void readPeakIntensity(List<PrideData> peaksIntensityList) {
@@ -657,6 +658,17 @@ public class DataAccessReader extends PrideDataReader {
             if (controller.getSpectrumMsLevel(spectrumId) == 2) {
                 noTandemSpectra = false;
                 peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, PrideDataType.ALL_SPECTRA));
+                peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, dataType));
+                if(controller.hasDecoyInformation()){
+                    if(spectrumDecoy.containsKey(spectrum.getId())){
+                        Tuple<Boolean, Boolean> status = spectrumDecoy.get(spectrumId);
+                        if(status.getKey())
+                            peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, PrideDataType.IDENTIFIED_TARGET));
+                        if(status.getValue())
+                            peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, PrideDataType.IDENTIFIED_DECOY));
+                    }
+                }
+
                 avgDataSource.addSpectrum(spectrum, dataType);
 
                 for (double v : spectrum.getIntensityBinaryDataArray().getDoubleArray()) {

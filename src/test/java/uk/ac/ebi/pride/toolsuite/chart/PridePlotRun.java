@@ -104,7 +104,7 @@ public class PridePlotRun {
             case PEAKS_MS:
                 dataSource = new PrideEqualWidthHistogramDataSource(data, false);
                 dataSource.appendBins(((PrideEqualWidthHistogramDataSource)dataSource).generateBins(0, 400, 8));
-                plot = new PeaksMSPlot(PrideDatasetFactory.getHistogramDataset(dataSource));
+                plot = new PeaksMSPlot(PrideDatasetFactory.getHistogramDataset(dataSource), PrideDataType.ALL_SPECTRA);
                 break;
             case PEAK_INTENSITY:
                 dataSource = new PrideHistogramDataSource(data, true);

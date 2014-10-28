@@ -61,7 +61,7 @@ public class PrideChartFactory {
         PrideCategoryPlot plot;
         switch (type) {
             case PEAKS_MS:
-                plot = new PeaksMSPlot(PrideDatasetFactory.getHistogramDataset(dataSource));
+                plot = new PeaksMSPlot(PrideDatasetFactory.getHistogramDataset(dataSource), PrideDataType.ALL_SPECTRA);
                 break;
             case PEAK_INTENSITY:
                 plot = new PeakIntensityPlot(PrideDatasetFactory.getHistogramDataset(dataSource), PrideDataType.ALL_SPECTRA);

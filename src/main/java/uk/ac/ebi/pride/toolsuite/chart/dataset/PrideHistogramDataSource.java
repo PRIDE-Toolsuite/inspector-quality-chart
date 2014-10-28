@@ -25,8 +25,6 @@ public class PrideHistogramDataSource implements PrideDataSource {
 
     private Set<PrideDataType> dataTypeList = new HashSet<PrideDataType>();   // list all data type which stored in current data source.
 
-    private boolean displayDataTypeList = false;
-
     public PrideHistogramDataSource(PrideData[] values, boolean calcAllSpectra) {
         this.calcAllSpectra = calcAllSpectra;
         this.values = values;
