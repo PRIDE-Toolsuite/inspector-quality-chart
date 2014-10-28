@@ -137,6 +137,7 @@ public class DataAccessReader extends PrideDataReader {
                 maxFreq = size;
             }
         }
+
         double relativeFreq;
         for(PrideDataType dataType: histogramMap.keySet()){
             identhistogram = histogramMap.get(dataType);
@@ -151,35 +152,41 @@ public class DataAccessReader extends PrideDataReader {
         int targetmaxFreq = 0;
 
         targethistogram = histogramMap.get(PrideDataType.IDENTIFIED_TARGET);
-        for (Integer size : targethistogram.values()) {
-            if (size > targetmaxFreq) {
-                targetmaxFreq = size;
+        if(targethistogram != null){
+            for (Integer size : targethistogram.values()) {
+                if (size > targetmaxFreq) {
+                    targetmaxFreq = size;
+                }
             }
-        }
 
-        double targetFreq;
-        for (PrideHistogramBin bin : targethistogram.keySet()) {
+            double targetFreq;
+            for (PrideHistogramBin bin : targethistogram.keySet()) {
                 deltaDomain.add(bin.getStartBoundary());
                 targetFreq = targetmaxFreq == 0 ? 0 : targethistogram.get(bin) * 1.0d / targetmaxFreq;
                 deltaRange.add(new PrideData(targetFreq, PrideDataType.IDENTIFIED_TARGET));
+            }
         }
+
 
         SortedMap<PrideHistogramBin, Integer> decoyHistogram;
         int decoymaxFreq = 0;
 
         decoyHistogram = histogramMap.get(PrideDataType.IDENTIFIED_DECOY);
-        for (Integer size : decoyHistogram.values()) {
-            if (size > decoymaxFreq) {
-                decoymaxFreq = size;
+        if(decoyHistogram != null){
+            for (Integer size : decoyHistogram.values()) {
+                if (size > decoymaxFreq) {
+                    decoymaxFreq = size;
+                }
+            }
+
+            double decoyFreq;
+            for (PrideHistogramBin bin : decoyHistogram.keySet()) {
+                deltaDomain.add(bin.getStartBoundary());
+                decoyFreq = decoymaxFreq == 0 ? 0 : decoyHistogram.get(bin) * 1.0d / decoymaxFreq;
+                deltaRange.add(new PrideData(decoyFreq, PrideDataType.IDENTIFIED_DECOY));
             }
         }
 
-        double decoyFreq;
-        for (PrideHistogramBin bin : decoyHistogram.keySet()) {
-            deltaDomain.add(bin.getStartBoundary());
-            decoyFreq = decoymaxFreq == 0 ? 0 : decoyHistogram.get(bin) * 1.0d / decoymaxFreq;
-            deltaRange.add(new PrideData(decoyFreq, PrideDataType.IDENTIFIED_DECOY));
-        }
 
         for (int i = 0; i < deltaRange.size(); i++) {
             if (deltaRange.get(i).getData() == null) {

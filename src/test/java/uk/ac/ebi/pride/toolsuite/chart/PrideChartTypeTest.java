@@ -17,7 +17,7 @@ public class PrideChartTypeTest {
             previous = chartType;
         }
 
-        PrideChartType next = PrideChartType.PEAK_INTENSITY;
+        PrideChartType next = PrideChartType.QUANTITATION_PEPTIDES;
         PrideChartType[] types = PrideChartType.values();
         for (int i = types.length - 1; i >= 0; i--) {
             assertEquals(types[i].next(), next);

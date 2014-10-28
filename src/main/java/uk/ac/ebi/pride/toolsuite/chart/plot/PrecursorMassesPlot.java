@@ -203,6 +203,7 @@ public class PrecursorMassesPlot extends PrideXYPlot {
         String seriesKey;
         Color color;
         for (int i = 0; i < getSeriesCount(); i++) {
+
             renderer.setSeriesShapesVisible(i, false);
             seriesKey = (String) getDataset().getSeriesKey(i);
 

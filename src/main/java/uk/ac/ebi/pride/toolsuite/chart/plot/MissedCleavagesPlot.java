@@ -70,6 +70,7 @@ public class MissedCleavagesPlot extends PrideXYPlot {
                 renderer.setSeriesVisible(i, visible);
             }
         }
+
     }
 
     @Override
