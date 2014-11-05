@@ -23,14 +23,24 @@ public class PrideHistogramDataSource implements PrideDataSource {
 
     private SortedMap<PrideDataType, SortedMap<PrideHistogramBin, Integer>> histMap;
 
+    private SortedMap<String, SortedMap<PrideHistogramBin,Integer>> categortyHistMap;
+
+    private Set<String> categoryTypes = new HashSet<String>();
+
     private Set<PrideDataType> dataTypeList = new HashSet<PrideDataType>();   // list all data type which stored in current data source.
 
-    public PrideHistogramDataSource(PrideData[] values, boolean calcAllSpectra) {
+    public PrideHistogramDataSource(PrideData[] values, boolean calcAllSpectra, boolean categoryType) {
+
         this.calcAllSpectra = calcAllSpectra;
         this.values = values;
 
         for (PrideData value : values) {
             dataTypeList.add(value.getType());
+        }
+
+        if(categoryType){
+            for(PrideData value: values)
+                categoryTypes.add(value.getCategory());
         }
 
         if (calcAllSpectra) {
@@ -180,6 +190,58 @@ public class PrideHistogramDataSource implements PrideDataSource {
         }
 
         return histMap;
+    }
+
+    public SortedMap<String, SortedMap<PrideHistogramBin, Integer>> getCategoryHistogramMap() {
+
+        if (categortyHistMap != null) {
+            return categortyHistMap;
+        }
+
+        this.categortyHistMap = new TreeMap<String, SortedMap<PrideHistogramBin, Integer>>();
+
+//        for(String category: categoryTypes){
+//            for (PrideData d : values) {
+//                for (PrideHistogramBin bin : bins) {
+//                    if (d.getData() >= bin.getStartBoundary() && d.getData() < bin.getEndBoundary()) {
+//                        if (d.getCategory().equalsIgnoreCase(category)) {
+//                            SortedMap<PrideHistogramBin, Integer> histogram = categortyHistMap.get(category);
+//                            if (histogram == null) {
+//                                histogram = createEmptyHistogram();
+//                                categortyHistMap.put(category, histogram);
+//                            }
+//                            histogram.put(bin, histogram.get(bin) + 1);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+
+        for(String category: categoryTypes){
+            for (PrideData d : values) {
+                int i = 0;
+                for (PrideHistogramBin bin : bins) {
+                    if (d.getData() >= bin.getStartBoundary() && d.getData() < bin.getEndBoundary()
+                            || (i == 0 && d.getData() < bin.getStartBoundary())
+                            || (i == bins.size()-1 && d.getData() >= bin.getEndBoundary())
+                            ) {
+                        if (d.getCategory().equalsIgnoreCase(category)) {
+                            SortedMap<PrideHistogramBin, Integer> histogram = categortyHistMap.get(category);
+                            if (histogram == null) {
+                                histogram = createEmptyHistogram();
+                                categortyHistMap.put(category, histogram);
+                            }
+                            histogram.put(bin, histogram.get(bin) + 1);
+                        }
+                    }
+                    i++;
+                }
+            }
+        }
+
+
+
+            return categortyHistMap;
     }
 
     public PrideData[] getValues() {

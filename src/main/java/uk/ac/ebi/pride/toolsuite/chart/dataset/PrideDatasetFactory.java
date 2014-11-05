@@ -31,6 +31,19 @@ public class PrideDatasetFactory {
         return series;
     }
 
+    private static XYSeries getQuantSeries(PrideXYDataSource dataSource) {
+        String key = dataSource.getCategoryDataType().iterator().next();
+        XYSeries series = new XYSeries(key);
+        Double[] domainValues = dataSource.getDomainData();
+        PrideData[] rangeValues = dataSource.getRangeData();
+        for (int i = 0; i < domainValues.length; i++) {
+            series.add(domainValues[i], rangeValues[i].getData());
+        }
+
+        return series;
+    }
+
+
     public static XYSeriesCollection getXYDataset(PrideXYDataSource dataSource) {
 
         XYSeries series = getSeries(dataSource.filter(dataSource.getDataType()));
@@ -43,6 +56,22 @@ public class PrideDatasetFactory {
             PrideXYDataSource filterDataSource = dataSource.filter(subType);
             if (filterDataSource != null) {
                 series = getSeries(filterDataSource);
+                dataset.addSeries(series);
+            }
+        }
+
+        return dataset;
+    }
+
+    public static XYSeriesCollection getQuantXYDataset(PrideXYDataSource dataSource) {
+
+        XYSeriesCollection dataset = new XYSeriesCollection();
+
+        Collection<String> subTypes = dataSource.getCategoryDataType();
+        for (String category : subTypes) {
+            PrideXYDataSource filterDataSource = dataSource.filterCategory(category);
+            if (filterDataSource != null) {
+                XYSeries series = getQuantSeries(filterDataSource);
                 dataset.addSeries(series);
             }
         }

@@ -39,6 +39,9 @@ public class PrideChartFactory {
             case PRECURSOR_MASSES:
                 plot = new PrecursorMassesPlot(PrideDatasetFactory.getXYDataset(dataSource), PrideDataType.ALL_SPECTRA);
                 break;
+            case QUANTITATION_PEPTIDES:
+                plot = new QuantitationChart(PrideDatasetFactory.getQuantXYDataset(dataSource), QuantitationChart.getDefaultCategory(dataSource));
+                break;
             default:
                 throw new IllegalArgumentException("Can not create XY style plot.");
         }
@@ -72,22 +75,6 @@ public class PrideChartFactory {
                 plot = new MissedCleavagesPlot(PrideDatasetFactory.getHistogramDataset(dataSource, PrideChartType.MISSED_CLEAVAGES), PrideDataType.IDENTIFIED_SPECTRA);
                 break;
 
-            default:
-                throw new IllegalArgumentException("Can not create Histogram style plot.");
-        }
-
-        return plot;
-    }
-
-    public static PrideXYPlot getHistogramPlot(PrideXYDataSource dataSource, PrideChartType type) {
-        if (dataSource == null) {
-            return null;
-        }
-       QuantitationChart plot;
-        switch (type) {
-            case QUANTITATION_PEPTIDES:
-                plot = new QuantitationChart(PrideDatasetFactory.getXYDataset(dataSource), PrideDataType.ALL_SPECTRA);
-                break;
             default:
                 throw new IllegalArgumentException("Can not create Histogram style plot.");
         }

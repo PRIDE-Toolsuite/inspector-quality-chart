@@ -1,6 +1,8 @@
 package uk.ac.ebi.pride.toolsuite.chart.io;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
+
+import org.apache.commons.math3.random.EmpiricalDistribution;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.log4j.Logger;
 import uk.ac.ebi.pride.toolsuite.chart.PrideChartType;
 import uk.ac.ebi.pride.toolsuite.chart.dataset.*;
@@ -17,6 +19,8 @@ import java.util.*;
 /**
  * DataAccess Reader is a class to do the analysis of protein and peptide statistics and chart generation.
  * @author qingwei
+ * @author ypriverol
+ *
  * Date: 12/06/13
  */
 public class DataAccessReader extends PrideDataReader {
@@ -34,7 +38,6 @@ public class DataAccessReader extends PrideDataReader {
     private boolean noPeptide = true;
     private boolean noSpectra = true;
     private boolean noTandemSpectra = true;
-    private boolean decoyPresentInformation = false;
 
     private List<Double> deltaDomain = new ArrayList<Double>();
     private List<PrideData> deltaRange = new ArrayList<PrideData>();
@@ -62,7 +65,6 @@ public class DataAccessReader extends PrideDataReader {
             throw new NullPointerException(source + " is null!");
         }
         this.controller = controller;
-        decoyPresentInformation = controller.hasDecoyInformation();
 
         readData();
     }
@@ -70,6 +72,256 @@ public class DataAccessReader extends PrideDataReader {
     @Override
     protected void start() {
         start = System.currentTimeMillis();
+    }
+
+    @Override
+    protected void reading() {
+        for (int i = 0; i < 6; i++) {
+            peptidesDomain[i] = i + 1.0;
+        }
+
+        //If mzTab and contains quantitation data
+        if(controller.getType().equals(DataAccessController.Type.MZTAB) && controller.hasQuantData()){
+            for(Comparable idStudyVariable: controller.getStudyVariables().keySet()){
+                variables.put(idStudyVariable, controller.getStudyVariables().get(idStudyVariable).getDescription());
+                variablesStudy.put(idStudyVariable, new ArrayList<Double>());
+            }
+        }
+
+        /*for (int i = 0; i < 5; i++) {
+            missedDomain[i] = i + 0.0;
+        }*/
+
+        for (int i = 0; i < 8; i++) {
+            preChargeDomain[i] = i + 1.0;
+        }
+
+        int[] peptideBars = new int[6];
+        List<PrideData> missedBars = new ArrayList<PrideData>();
+//        int[] decoyMissedBar  = new int[5];
+//        int[] targetMissedBar = new int[5];
+        int[] preChargeBars = new int[8];
+
+        List<PrideData> deltaMZList = new ArrayList<PrideData>();
+        List<PrideData> preMassedList = new ArrayList<PrideData>();
+
+        Protein protein;
+        List<Peptide> peptideList;
+
+        Map<Comparable, Tuple<Boolean, Boolean>> spectrumDecoy = new HashMap<Comparable, Tuple<Boolean, Boolean>>();
+
+        for (Comparable proteinId : controller.getProteinIds()) {
+
+            protein = controller.getProteinById(proteinId);
+            peptideList = protein.getPeptides();
+            // fill peptides per protein
+            int size = peptideList.size();
+            if (size < 6) {
+                peptideBars[size - 1]++;
+            } else {
+                peptideBars[5]++;
+            }
+
+            int missedCleavages;
+            Double deltaMZ;
+            for (Peptide peptide : peptideList) {
+
+                noPeptide = false;
+                peptideSize++;
+
+                // fill delta m/z histogram.
+                deltaMZ = calcDeltaMZ(peptide);
+                if (deltaMZ != null) {
+                    deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_SPECTRA));
+                    if(controller.hasDecoyInformation()){
+                        if(peptide.getPeptideEvidence().isDecoy()){
+                            deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_DECOY));
+                        }else{
+                            deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_TARGET));
+                        }
+                    }
+
+                }
+
+                // fill missed cleavages
+                missedCleavages = calcMissedCleavages(peptide);
+                if (missedCleavages < 4) {
+                    missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_SPECTRA));
+                    if(controller.hasDecoyInformation())
+                        if(peptide.getPeptideEvidence().isDecoy())
+                            missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_DECOY));
+                        else
+                            missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_TARGET));
+
+                } else {
+                    missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_SPECTRA));
+                    if(controller.hasDecoyInformation())
+                        if(peptide.getPeptideEvidence().isDecoy())
+                            missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_DECOY));
+                        else
+                            missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_TARGET));
+                }
+
+                if(controller.hasDecoyInformation() && controller.hasSpectrum()){
+                    Comparable id = controller.getSpectrumIdForPeptide(peptide.getSpectrumIdentification().getId());
+                    if(id != null){
+                        Tuple<Boolean, Boolean> status = new Tuple<Boolean, Boolean>(false,false);
+                        if(spectrumDecoy.containsKey(id))
+                            status = spectrumDecoy.get(id);
+                        if (peptide.getPeptideEvidence().isDecoy()){
+                            status.setValue(true);
+                        }else{
+                            status.setKey(true);
+                        }
+                        spectrumDecoy.put(id,status);
+                    }
+                }
+            }
+
+            //If mzTab and contains quantitation data
+            if(controller.getType().equals(DataAccessController.Type.MZTAB) && controller.hasQuantData()){
+                List<QuantPeptide> quantPeptides = controller.getProteinById(proteinId).getQuantPeptides();
+                for(QuantPeptide peptide: quantPeptides){
+                    QuantScore quantScore = peptide.getQuantScore();
+                    for(Comparable studyValueKey: quantScore.getStudyVariableScores().keySet()){
+                        if(quantScore.getStudyVariableScores().get(studyValueKey) != null){
+                            variablesStudy.get(studyValueKey).add(quantScore.getStudyVariableScores().get(studyValueKey));
+                        }
+                    }
+                }
+            }
+
+        }
+
+        // spectrum level statistics.
+        Integer preCharge;
+        Double preMZ;
+        Peptide peptide;
+        Spectrum spectrum;
+        List<PrideData> peaksMSList = new ArrayList<PrideData>();
+        List<PrideData> peaksIntensityList = new ArrayList<PrideData>();
+        PrideSpectrumHistogramDataSource avgDataSource = new PrideSpectrumHistogramDataSource(true);
+
+        PrideDataType dataType;
+        for (Comparable spectrumId : controller.getSpectrumIds()) {
+            noSpectra = false;
+            spectrum = controller.getSpectrumById(spectrumId);
+            List<Peptide> peptides = spectrum.getPeptide();
+
+            // precursor charge and mass.
+            if (peptides == null) {
+                preCharge = DataAccessUtilities.getPrecursorCharge(spectrum.getPrecursors());
+                preMZ = DataAccessUtilities.getPrecursorMz(spectrum);
+            } else {
+                preCharge = peptides.get(0).getPrecursorCharge();
+                preMZ = peptides.get(0).getPrecursorMz();
+            }
+            // Charge State must be less than 8, but some files can have the annotation wrong
+            if (preCharge != null && preCharge < 8 && controller.isIdentifiedSpectrum(spectrumId)) {
+                // Identified spectrum.
+                preChargeBars[preCharge - 1]++;
+            }
+
+            if (preMZ != null && preMZ > -1 && preCharge != null && preCharge < 8) {
+                preMassedList.add(new PrideData(preMZ * preCharge,
+                        controller.isIdentifiedSpectrum(spectrumId) ? PrideDataType.IDENTIFIED_SPECTRA : PrideDataType.UNIDENTIFIED_SPECTRA
+                ));
+                if(controller.hasDecoyInformation()){
+                    if(spectrumDecoy.containsKey(spectrum.getId())){
+                        Tuple<Boolean, Boolean> status = spectrumDecoy.get(spectrumId);
+                        if(status.getKey())
+                            preMassedList.add(new PrideData(preMZ * preCharge, PrideDataType.IDENTIFIED_TARGET));
+                        if(status.getValue())
+                            preMassedList.add(new PrideData(preMZ * preCharge, PrideDataType.IDENTIFIED_DECOY));
+                    }
+                }
+            }
+            if (controller.isIdentifiedSpectrum(spectrumId)) {
+                identifiedSpectraSize++;
+                dataType = PrideDataType.IDENTIFIED_SPECTRA;
+            } else {
+                unidentifiedSpectraSize++;
+                dataType = PrideDataType.UNIDENTIFIED_SPECTRA;
+            }
+
+            if (controller.getSpectrumMsLevel(spectrumId) == 2) {
+                noTandemSpectra = false;
+                peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, PrideDataType.ALL_SPECTRA));
+                peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, dataType));
+                if(controller.hasDecoyInformation()){
+                    if(spectrumDecoy.containsKey(spectrum.getId())){
+                        Tuple<Boolean, Boolean> status = spectrumDecoy.get(spectrumId);
+                        if(status.getKey())
+                            peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, PrideDataType.IDENTIFIED_TARGET));
+                        if(status.getValue())
+                            peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, PrideDataType.IDENTIFIED_DECOY));
+                    }
+                }
+
+                avgDataSource.addSpectrum(spectrum, dataType);
+
+                for (double v : spectrum.getIntensityBinaryDataArray().getDoubleArray()) {
+                    peaksIntensityList.add(new PrideData(v, dataType));
+                    if(controller.hasDecoyInformation()){
+                        if(spectrumDecoy.containsKey(spectrum.getId())){
+                            Tuple<Boolean, Boolean> status = spectrumDecoy.get(spectrumId);
+                            if(status.getKey())
+                                peaksIntensityList.add(new PrideData(v, PrideDataType.IDENTIFIED_TARGET));
+                            if(status.getValue())
+                                peaksIntensityList.add(new PrideData(v, PrideDataType.IDENTIFIED_DECOY));
+                        }
+                    }
+                }
+            }
+
+        }
+
+        // release memory.
+        controller = null;
+
+//        start = System.currentTimeMillis();
+//        readPeptide(peptideBars);
+//        logger.debug("create peptide data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
+//
+//        start = System.currentTimeMillis();
+//        readDelta(deltaMZList);
+//        logger.debug("create delta mz data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
+//
+//        start = System.currentTimeMillis();
+//        readMissed(missedBars);
+//        logger.debug("create missed cleavages data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
+//
+//        start = System.currentTimeMillis();
+//        readPreCharge(preChargeBars);
+//        logger.debug("create precursor charge data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
+//
+//        start = System.currentTimeMillis();
+//        readPreMasses(preMassedList);
+//        logger.debug("create precursor masses data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
+//
+//        start = System.currentTimeMillis();
+//        readAvg(avgDataSource);
+//        logger.debug("create average ms/ms data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
+//
+//        start = System.currentTimeMillis();
+//        readPeakMS(peaksMSList);
+//        logger.debug("create peaks per ms/ms data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
+//
+//        start = System.currentTimeMillis();
+//        readPeakIntensity(peaksIntensityList);
+//        logger.debug("create peak intensity data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
+
+        readPeptide(peptideBars);
+        readDelta(deltaMZList);
+        readMissed(missedBars);
+
+        readPreCharge(preChargeBars);
+        readPreMasses(preMassedList);
+
+        readAvg(avgDataSource);
+        readPeakMS(peaksMSList);
+        readPeakIntensity(peaksIntensityList);
+        readQuantitation(variables, variablesStudy);
     }
 
     private Double calcDeltaMZ(Peptide peptide) {
@@ -100,13 +352,17 @@ public class DataAccessReader extends PrideDataReader {
         return initialLength - sequence.length();
     }
 
+    /**
+     * Read the Delta Mz for all the peptides.
+     * @param deltaMZList
+     */
     private void readDelta(List<PrideData> deltaMZList) {
-        if (noPeptide) {
-            errorMap.put(PrideChartType.DELTA_MASS, new PrideDataException(PrideDataException.NO_PEPTIDE));
+        if (noPeptide || noSpectra) {
+            errorMap.put(PrideChartType.DELTA_MASS, new PrideDataException(PrideDataException.NO_PRE_CHARGE));
             return;
         }
 
-        PrideEqualWidthHistogramDataSource dataSource = new PrideEqualWidthHistogramDataSource(deltaMZList.toArray(new PrideData[deltaMZList.size()]),true);
+        PrideEqualWidthHistogramDataSource dataSource = new PrideEqualWidthHistogramDataSource(deltaMZList.toArray(new PrideData[deltaMZList.size()]),true, false);
 
         double start = Double.MAX_VALUE;
         double end = Double.MIN_VALUE;
@@ -201,6 +457,10 @@ public class DataAccessReader extends PrideDataReader {
         ));
     }
 
+    /**
+     * Read delta Peptides per Proteins Chart.
+     * @param peptideBars
+     */
     private void readPeptide(int[] peptideBars) {
         PrideDataType dataType = PrideDataType.ALL_SPECTRA;
 
@@ -220,6 +480,10 @@ public class DataAccessReader extends PrideDataReader {
         ));
     }
 
+    /**
+     * Read miscleavage information and convert to histogram representation.
+     * @param missedCleavages
+     */
     private void readMissed(List<PrideData> missedCleavages) {
 
         if (noPeptide) {
@@ -229,7 +493,7 @@ public class DataAccessReader extends PrideDataReader {
 
         PrideEqualWidthHistogramDataSource dataSource = new PrideEqualWidthHistogramDataSource(
                 missedCleavages.toArray(new PrideData[missedCleavages.size()]),
-                false
+                false, false
         );
         dataSource.appendBins(dataSource.generateGranularityBins(0d, 4, 1));
 
@@ -237,6 +501,11 @@ public class DataAccessReader extends PrideDataReader {
 
     }
 
+    /**
+     * Read Quantitation Information
+     * @param studyVariables
+     * @param values
+     */
     private void readQuantitation(Map<Comparable, String> studyVariables, Map<Comparable, List<Double>> values) {
 
         if (noPeptide) {
@@ -248,23 +517,54 @@ public class DataAccessReader extends PrideDataReader {
             errorMap.put(PrideChartType.QUANTITATION_PEPTIDES, new PrideDataException(PrideDataException.NO_PROTEIN_QUANT));
             return;
         }
-        if (noSpectra) {
-            errorMap.put(PrideChartType.PRECURSOR_MASSES, new PrideDataException(PrideDataException.NO_SPECTRA));
-            return;
-        }
+
         List<PrideData> preQuantList = new ArrayList<PrideData>();
+
+//        PrideEqualWidthHistogramDataSource dataSource = new PrideEqualWidthHistogramDataSource(preQuantList.toArray(new PrideData[preQuantList.size()]), true, true);
+//        dataSource.appendBins(dataSource.generateGranularityBins(minValue, 10, (int)(maxValue-minValue/10)));
+
+        double start = Double.MAX_VALUE;
+        double end = Double.MIN_VALUE;
+        double v;
+
+
+        List<Double> totalValues = new ArrayList<Double>();
         for(Comparable studyId: studyVariables.keySet()){
             List<Double> valueStudy = values.get(studyId);
-            for(Double value: valueStudy){
-                PrideData pridata = new PrideData(value, studyVariables.get(studyId));
+            for (Double data : valueStudy) {
+                v = data;
+                PrideData pridata = new PrideData(data, studyVariables.get(studyId));
                 preQuantList.add(pridata);
-
+                if (v < start) {
+                    start = v;
+                }
+                if (v > end) {
+                    end = v;
+                }
             }
+            totalValues.addAll(valueStudy);
         }
-        CategorySetHistogramDataSource dataSource = new CategorySetHistogramDataSource(preQuantList.toArray(new PrideData[preQuantList.size()]));
-        dataSource.appendBins(dataSource.generateBins(0d, PRE_MIN_BIN_WIDTH));
+        double[] distribution = new double[totalValues.size()];
+        for(int i=0; i < totalValues.size(); i++)
+            distribution[0] = totalValues.get(i);
 
-        SortedMap<String, SortedMap<PrideHistogramBin, Integer>> histogramMap = dataSource.getHistogramMap();
+        EmpiricalDistribution empiricalDistribution = new EmpiricalDistribution(20);
+        empiricalDistribution.load(distribution);
+        for(double bounder: empiricalDistribution.getUpperBounds())
+          System.out.println(bounder);
+
+        System.out.println(empiricalDistribution.getUpperBounds().length);
+
+//        double binWidth = (end - start) / DELTA_BIN_COUNT;
+//        binWidth = binWidth < DELTA_MIN_BIN_WIDTH ? DELTA_MIN_BIN_WIDTH : binWidth;
+        PrideEqualWidthHistogramDataSource dataSource = new PrideEqualWidthHistogramDataSource(preQuantList.toArray(new PrideData[preQuantList.size()]), false, true);
+
+        //dataSource.appendBins(dataSource.generateBins(-DELTA_BIN_COUNT * binWidth, binWidth, DELTA_BIN_COUNT * 2));
+        for(int i = 0; i < empiricalDistribution.getUpperBounds().length -1; i++){
+            dataSource.appendBin(new PrideHistogramBin(empiricalDistribution.getUpperBounds()[i],empiricalDistribution.getUpperBounds()[i+1]));
+        }
+
+        SortedMap<String, SortedMap<PrideHistogramBin, Integer>> histogramMap = dataSource.getCategoryHistogramMap();
         for(String variable: histogramMap.keySet()){
             SortedMap<PrideHistogramBin, Integer> histogram = histogramMap.get(variable);
             if (histogram != null) {
@@ -282,12 +582,16 @@ public class DataAccessReader extends PrideDataReader {
             }
         }
         xyDataSourceMap.put(PrideChartType.QUANTITATION_PEPTIDES, new PrideXYDataSource(
-                preQuantDomain.toArray(new Double[preMassesDomain.size()]),
-                preQuantRange.toArray(new PrideData[preMassesRange.size()]),
-                PrideDataType.ALL_SPECTRA
+                preQuantDomain.toArray(new Double[preQuantDomain.size()]),
+                preQuantRange.toArray(new PrideData[preQuantRange.size()]),
+                PrideDataType.IDENTIFIED_SPECTRA
         ));
     }
 
+    /**
+     * Read Avg Information for all the spectra
+     * @param dataSource
+     */
     private void readAvg(PrideSpectrumHistogramDataSource dataSource) {
         if (noTandemSpectra) {
             errorMap.put(PrideChartType.AVERAGE_MS, new PrideDataException(PrideDataException.NO_TANDEM_SPECTRA));
@@ -299,6 +603,10 @@ public class DataAccessReader extends PrideDataReader {
         histogramDataSourceMap.put(PrideChartType.AVERAGE_MS, dataSource);
     }
 
+    /**
+     * Read precursor charge information and generate the Charts
+     * @param preChargeBars
+     */
     private void readPreCharge(int[] preChargeBars) {
         if (noSpectra) {
             errorMap.put(PrideChartType.PRECURSOR_CHARGE, new PrideDataException(PrideDataException.NO_SPECTRA));
@@ -324,6 +632,10 @@ public class DataAccessReader extends PrideDataReader {
         ));
     }
 
+    /**
+     * Read the precursor mass information and generate the Charts
+     * @param preMassedList
+     */
     private void readPreMasses(List<PrideData> preMassedList) {
         if (noSpectra) {
             errorMap.put(PrideChartType.PRECURSOR_MASSES, new PrideDataException(PrideDataException.NO_SPECTRA));
@@ -344,7 +656,7 @@ public class DataAccessReader extends PrideDataReader {
 
         PrideEqualWidthHistogramDataSource dataSource = new PrideEqualWidthHistogramDataSource(
                 preMassedList.toArray(new PrideData[preMassedList.size()]),
-                true
+                true, false
         );
         dataSource.appendBins(dataSource.generateBins(0d, PRE_MIN_BIN_WIDTH));
 
@@ -429,6 +741,7 @@ public class DataAccessReader extends PrideDataReader {
         ));
     }
 
+
     private void readPeakMS(List<PrideData> peaksMSList) {
         if (noTandemSpectra) {
             errorMap.put(PrideChartType.PEAKS_MS, new PrideDataException(PrideDataException.NO_TANDEM_SPECTRA));
@@ -437,7 +750,7 @@ public class DataAccessReader extends PrideDataReader {
 
         PrideEqualWidthHistogramDataSource dataSource = new PrideEqualWidthHistogramDataSource(
                 peaksMSList.toArray(new PrideData[peaksMSList.size()]),
-                false
+                false,false
         );
         dataSource.appendBins(dataSource.generateGranularityBins(0d, 10, 50));
 
@@ -454,7 +767,7 @@ public class DataAccessReader extends PrideDataReader {
 
         PrideHistogramDataSource dataSource = new PrideHistogramDataSource(
                 peaksIntensityList.toArray(new PrideData[peaksIntensityList.size()]),
-                true
+                true, false
         );
         dataSource.appendBin(new PrideHistogramBin(0, 5));
         dataSource.appendBin(new PrideHistogramBin(10,  100));
@@ -469,257 +782,6 @@ public class DataAccessReader extends PrideDataReader {
         dataSource.appendBin(new PrideHistogramBin(10000, Integer.MAX_VALUE));
 
         histogramDataSourceMap.put(PrideChartType.PEAK_INTENSITY, dataSource);
-    }
-
-    @Override
-    protected void reading() {
-        for (int i = 0; i < 6; i++) {
-            peptidesDomain[i] = i + 1.0;
-        }
-
-        //If mzTab and contains quantitation data
-        if(controller.getType().equals(DataAccessController.Type.MZTAB) && controller.hasQuantData()){
-            for(Comparable idStudyVariable: controller.getStudyVariables().keySet()){
-                variables.put(idStudyVariable, controller.getStudyVariables().get(idStudyVariable).getDescription());
-                variablesStudy.put(idStudyVariable, new ArrayList<Double>());
-            }
-        }
-
-        /*for (int i = 0; i < 5; i++) {
-            missedDomain[i] = i + 0.0;
-        }*/
-
-        for (int i = 0; i < 8; i++) {
-            preChargeDomain[i] = i + 1.0;
-        }
-
-        int[] peptideBars = new int[6];
-        List<PrideData> missedBars = new ArrayList<PrideData>();
-//        int[] decoyMissedBar  = new int[5];
-//        int[] targetMissedBar = new int[5];
-        int[] preChargeBars = new int[8];
-
-        List<PrideData> deltaMZList = new ArrayList<PrideData>();
-        List<PrideData> preMassedList = new ArrayList<PrideData>();
-
-        Protein protein;
-        List<Peptide> peptideList;
-
-        Map<Comparable, Tuple<Boolean, Boolean>> spectrumDecoy = new HashMap<Comparable, Tuple<Boolean, Boolean>>();
-
-        for (Comparable proteinId : controller.getProteinIds()) {
-
-            protein = controller.getProteinById(proteinId);
-            peptideList = protein.getPeptides();
-            // fill peptides per protein
-            int size = peptideList.size();
-            if (size < 6) {
-                peptideBars[size - 1]++;
-            } else {
-                peptideBars[5]++;
-            }
-
-            int missedCleavages;
-            Double deltaMZ;
-            for (Peptide peptide : peptideList) {
-                noPeptide = false;
-                peptideSize++;
-
-                // fill delta m/z histogram.
-                deltaMZ = calcDeltaMZ(peptide);
-                if (deltaMZ != null) {
-                    deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_SPECTRA));
-                    if(controller.hasDecoyInformation()){
-                        if(peptide.getPeptideEvidence().isDecoy()){
-                            deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_DECOY));
-                        }else{
-                            deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_TARGET));
-                        }
-                    }
-
-                }
-
-                // fill missed cleavages
-                missedCleavages = calcMissedCleavages(peptide);
-                if (missedCleavages < 4) {
-                    missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_SPECTRA));
-                    if(controller.hasDecoyInformation())
-                        if(peptide.getPeptideEvidence().isDecoy())
-                            missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_DECOY));
-                        else
-                            missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_TARGET));
-
-                } else {
-                    missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_SPECTRA));
-                    if(controller.hasDecoyInformation())
-                        if(peptide.getPeptideEvidence().isDecoy())
-                            missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_DECOY));
-                        else
-                            missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_TARGET));
-                }
-
-                if(controller.hasDecoyInformation() && controller.hasSpectrum()){
-                    Comparable id = controller.getSpectrumIdForPeptide(peptide.getSpectrumIdentification().getId());
-                    if(id != null){
-                        Tuple<Boolean, Boolean> status = new Tuple<Boolean, Boolean>(false,false);
-                        if(spectrumDecoy.containsKey(id))
-                            status = spectrumDecoy.get(id);
-                        if (peptide.getPeptideEvidence().isDecoy()){
-                            status.setValue(true);
-                        }else{
-                            status.setKey(true);
-                        }
-                        spectrumDecoy.put(id,status);
-                    }
-                }
-            }
-
-            //If mzTab and contains quantitation data
-            if(controller.getType().equals(DataAccessController.Type.MZTAB) && controller.hasQuantData()){
-                List<QuantPeptide> quantPeptides = controller.getProteinById(proteinId).getQuantPeptides();
-                for(QuantPeptide peptide: quantPeptides){
-                    QuantScore quantScore = peptide.getQuantScore();
-                    for(Comparable studyValueKey: quantScore.getStudyVariableScores().keySet()){
-                        if(quantScore.getStudyVariableScores().get(studyValueKey) != null){
-                            variablesStudy.get(studyValueKey).add(quantScore.getStudyVariableScores().get(studyValueKey));
-                        }
-                    }
-                }
-            }
-
-        }
-
-
-        // spectrum level statistics.
-        Integer preCharge;
-        Double preMZ;
-        Peptide peptide;
-        Spectrum spectrum;
-        List<PrideData> peaksMSList = new ArrayList<PrideData>();
-        List<PrideData> peaksIntensityList = new ArrayList<PrideData>();
-        PrideSpectrumHistogramDataSource avgDataSource = new PrideSpectrumHistogramDataSource(true);
-
-        PrideDataType dataType;
-        for (Comparable spectrumId : controller.getSpectrumIds()) {
-            noSpectra = false;
-            spectrum = controller.getSpectrumById(spectrumId);
-            List<Peptide> peptides = spectrum.getPeptide();
-
-            // precursor charge and mass.
-            if (peptides == null) {
-                preCharge = DataAccessUtilities.getPrecursorCharge(spectrum.getPrecursors());
-                preMZ = DataAccessUtilities.getPrecursorMz(spectrum);
-            } else {
-                preCharge = peptides.get(0).getPrecursorCharge();
-                preMZ = peptides.get(0).getPrecursorMz();
-            }
-            // Charge State must be less than 8, but some files can have the annotation wrong
-            if (preCharge != null && preCharge < 8 && controller.isIdentifiedSpectrum(spectrumId)) {
-                // Identified spectrum.
-                preChargeBars[preCharge - 1]++;
-            }
-
-            if (preMZ != null && preMZ > -1 && preCharge != null && preCharge < 8) {
-                preMassedList.add(new PrideData(preMZ * preCharge,
-                        controller.isIdentifiedSpectrum(spectrumId) ? PrideDataType.IDENTIFIED_SPECTRA : PrideDataType.UNIDENTIFIED_SPECTRA
-                ));
-                if(controller.hasDecoyInformation()){
-                    if(spectrumDecoy.containsKey(spectrum.getId())){
-                        Tuple<Boolean, Boolean> status = spectrumDecoy.get(spectrumId);
-                        if(status.getKey())
-                            preMassedList.add(new PrideData(preMZ * preCharge, PrideDataType.IDENTIFIED_TARGET));
-                        if(status.getValue())
-                            preMassedList.add(new PrideData(preMZ * preCharge, PrideDataType.IDENTIFIED_DECOY));
-                    }
-                }
-            }
-            if (controller.isIdentifiedSpectrum(spectrumId)) {
-                identifiedSpectraSize++;
-                dataType = PrideDataType.IDENTIFIED_SPECTRA;
-            } else {
-                unidentifiedSpectraSize++;
-                dataType = PrideDataType.UNIDENTIFIED_SPECTRA;
-            }
-
-            if (controller.getSpectrumMsLevel(spectrumId) == 2) {
-                noTandemSpectra = false;
-                peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, PrideDataType.ALL_SPECTRA));
-                peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, dataType));
-                if(controller.hasDecoyInformation()){
-                    if(spectrumDecoy.containsKey(spectrum.getId())){
-                        Tuple<Boolean, Boolean> status = spectrumDecoy.get(spectrumId);
-                        if(status.getKey())
-                            peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, PrideDataType.IDENTIFIED_TARGET));
-                        if(status.getValue())
-                            peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, PrideDataType.IDENTIFIED_DECOY));
-                    }
-                }
-
-                avgDataSource.addSpectrum(spectrum, dataType);
-
-                for (double v : spectrum.getIntensityBinaryDataArray().getDoubleArray()) {
-                    peaksIntensityList.add(new PrideData(v, dataType));
-                    if(controller.hasDecoyInformation()){
-                        if(spectrumDecoy.containsKey(spectrum.getId())){
-                            Tuple<Boolean, Boolean> status = spectrumDecoy.get(spectrumId);
-                            if(status.getKey())
-                                peaksIntensityList.add(new PrideData(v, PrideDataType.IDENTIFIED_TARGET));
-                            if(status.getValue())
-                                peaksIntensityList.add(new PrideData(v, PrideDataType.IDENTIFIED_DECOY));
-                        }
-                    }
-                }
-            }
-
-        }
-
-        boolean hasDecoyInformation = controller.hasDecoyInformation();
-        // release memory.
-        controller = null;
-
-//        start = System.currentTimeMillis();
-//        readPeptide(peptideBars);
-//        logger.debug("create peptide data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readDelta(deltaMZList);
-//        logger.debug("create delta mz data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readMissed(missedBars);
-//        logger.debug("create missed cleavages data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readPreCharge(preChargeBars);
-//        logger.debug("create precursor charge data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readPreMasses(preMassedList);
-//        logger.debug("create precursor masses data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readAvg(avgDataSource);
-//        logger.debug("create average ms/ms data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readPeakMS(peaksMSList);
-//        logger.debug("create peaks per ms/ms data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readPeakIntensity(peaksIntensityList);
-//        logger.debug("create peak intensity data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-
-        readPeptide(peptideBars);
-        readDelta(deltaMZList);
-        readMissed(missedBars);
-
-        readPreCharge(preChargeBars);
-        readPreMasses(preMassedList);
-
-        readAvg(avgDataSource);
-        readPeakMS(peaksMSList);
-        readPeakIntensity(peaksIntensityList);
-        readQuantitation(variables, variablesStudy);
     }
 
     @Override

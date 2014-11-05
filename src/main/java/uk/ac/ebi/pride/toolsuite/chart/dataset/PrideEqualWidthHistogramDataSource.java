@@ -11,8 +11,8 @@ import java.util.*;
  */
 public class PrideEqualWidthHistogramDataSource extends PrideHistogramDataSource {
 
-    public PrideEqualWidthHistogramDataSource(PrideData[] values, boolean calcAllSpectra) {
-        super(values, calcAllSpectra);
+    public PrideEqualWidthHistogramDataSource(PrideData[] values, boolean calcAllSpectra, boolean categoryType) {
+        super(values, calcAllSpectra, categoryType);
     }
 
     /**

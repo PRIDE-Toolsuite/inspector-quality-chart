@@ -491,7 +491,7 @@ public class ElderJSONReader extends PrideDataReader {
             }
         }
 
-        PrideHistogramDataSource dataSource = new PrideHistogramDataSource(values.toArray(new PrideData[values.size()]), false);
+        PrideHistogramDataSource dataSource = new PrideHistogramDataSource(values.toArray(new PrideData[values.size()]), false, false);
         for (PrideHistogramBin bin : bins) {
             dataSource.appendBin(bin);
         }
@@ -523,7 +523,7 @@ public class ElderJSONReader extends PrideDataReader {
         countList = parseCounts(series.getJSONArray(Y_AXIS));
         addSeries(values, bins, countList, type);
 
-        PrideHistogramDataSource dataSource = new PrideHistogramDataSource(values.toArray(new PrideData[values.size()]), true);
+        PrideHistogramDataSource dataSource = new PrideHistogramDataSource(values.toArray(new PrideData[values.size()]), true, false);
         for (PrideHistogramBin bin : bins) {
             dataSource.appendBin(bin);
         }

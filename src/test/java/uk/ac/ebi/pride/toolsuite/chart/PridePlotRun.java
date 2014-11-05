@@ -98,17 +98,17 @@ public class PridePlotRun {
         PrideCategoryPlot plot;
         switch (type) {
             case PEAKS_MS:
-                dataSource = new PrideEqualWidthHistogramDataSource(data, false);
+                dataSource = new PrideEqualWidthHistogramDataSource(data, false, false);
                 dataSource.appendBins(((PrideEqualWidthHistogramDataSource)dataSource).generateBins(0, 400, 8));
                 plot = new PeaksMSPlot(PrideDatasetFactory.getHistogramDataset(dataSource, PrideChartType.PEAKS_MS), PrideDataType.ALL_SPECTRA);
                 break;
             case MISSED_CLEAVAGES:
-                dataSource = new PrideEqualWidthHistogramDataSource(data, false);
+                dataSource = new PrideEqualWidthHistogramDataSource(data, false, false);
                 dataSource.appendBins(((PrideEqualWidthHistogramDataSource)dataSource).generateBins(0, 1, 4));
                 plot = new MissedCleavagesPlot(PrideDatasetFactory.getHistogramDataset(dataSource, PrideChartType.MISSED_CLEAVAGES), PrideDataType.IDENTIFIED_SPECTRA);
                 break;
             case PEAK_INTENSITY:
-                dataSource = new PrideHistogramDataSource(data, true);
+                dataSource = new PrideHistogramDataSource(data, true, false);
                 dataSource.appendBin(new PrideHistogramBin(1, 100));
                 dataSource.appendBin(new PrideHistogramBin(100, 1000));
                 dataSource.appendBin(new PrideHistogramBin(1000, 2000));

@@ -19,6 +19,7 @@ public enum PrideDataType {
     private String title;
     private int id;
 
+
     private PrideDataType(int id, String title) {
         this.id = id;
         this.title = title;
@@ -77,6 +78,8 @@ public enum PrideDataType {
         return null;
         
     }
+
+
 
     /**
      * Check current data type compatible type or not.

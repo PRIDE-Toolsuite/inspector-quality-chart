@@ -10,6 +10,7 @@ import java.util.*;
  * Date: 02/07/13
  */
 public class PrideSpectrumHistogramDataSource extends PrideEqualWidthHistogramDataSource {
+
     private class PridePeak {
         double mz;
         double intensity;
@@ -30,7 +31,7 @@ public class PrideSpectrumHistogramDataSource extends PrideEqualWidthHistogramDa
 
 
     public PrideSpectrumHistogramDataSource(boolean calcAllSpectra) {
-        super(new PrideData[0], calcAllSpectra);
+        super(new PrideData[0], calcAllSpectra, false);
     }
 
     public void addSpectrum(Spectrum spectrum, PrideDataType dataType) {

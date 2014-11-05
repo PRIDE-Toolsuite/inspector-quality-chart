@@ -1,15 +1,13 @@
 package uk.ac.ebi.pride.toolsuite.chart.dataset;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author qingwei
  * Date: 12/06/13
  */
 public class PrideXYDataSource implements PrideDataSource {
+
     private Double[] domainData;
     private PrideData[] rangeData;
     private PrideDataType dataType;   // data source data type.
@@ -80,5 +78,43 @@ public class PrideXYDataSource implements PrideDataSource {
                     type
             );
         }
+    }
+
+    public PrideXYDataSource filterCategory(String type) {
+
+        List<Double> filterDomainData = new ArrayList<Double>();
+        List<PrideData> filterRangeData = new ArrayList<PrideData>();
+
+        PrideData data;
+        for (int i = 0; i < rangeData.length; i++) {
+            data = rangeData[i];
+            if (data.getCategory().equals(type)) {
+                filterDomainData.add(domainData[i]);
+                filterRangeData.add(rangeData[i]);
+            }
+        }
+
+        int size = filterDomainData.size();
+        if (size == 0) {
+            return null;
+        } else {
+            return new PrideXYDataSource(
+                    filterDomainData.toArray(new Double[size]),
+                    filterRangeData.toArray(new PrideData[size]),
+                    PrideDataType.IDENTIFIED_SPECTRA
+            );
+        }
+    }
+
+    public Collection<String> getCategoryDataType() {
+        Set<String> categories = new HashSet<String>();
+        for(PrideData data: rangeData){
+            String category = data.getCategory();
+            if(category!=null && !categories.contains(category)){
+                categories.add(data.getCategory());
+
+            }
+        }
+        return categories;
     }
 }

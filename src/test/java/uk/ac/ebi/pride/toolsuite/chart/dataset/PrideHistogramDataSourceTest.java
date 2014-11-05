@@ -51,7 +51,7 @@ public class PrideHistogramDataSourceTest {
 
         int count = 100;
         value = generateXData(20, 200, count);
-        PrideHistogramDataSource dataSource = new PrideEqualWidthHistogramDataSource(value, false);
+        PrideHistogramDataSource dataSource = new PrideEqualWidthHistogramDataSource(value, false, false);
         dataSource.appendBins(((PrideEqualWidthHistogramDataSource)dataSource).generateBins(0, 50, 4));
 
         SortedMap<PrideDataType, SortedMap<PrideHistogramBin, Integer>> histogramMap = dataSource.getHistogramMap();
@@ -73,7 +73,7 @@ public class PrideHistogramDataSourceTest {
         int count = 20;
         values = generateXData(20, 2000, count);
 
-        PrideHistogramDataSource dataSource = new PrideHistogramDataSource(values, true);
+        PrideHistogramDataSource dataSource = new PrideHistogramDataSource(values, true, false);
         dataSource.appendBin(new PrideHistogramBin(20, 200));
         dataSource.appendBin(new PrideHistogramBin(200, 1000));
         dataSource.appendBin(new PrideHistogramBin(1000, Integer.MAX_VALUE));
