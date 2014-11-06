@@ -550,10 +550,7 @@ public class DataAccessReader extends PrideDataReader {
 
         EmpiricalDistribution empiricalDistribution = new EmpiricalDistribution(20);
         empiricalDistribution.load(distribution);
-        for(double bounder: empiricalDistribution.getUpperBounds())
-          System.out.println(bounder);
-
-        System.out.println(empiricalDistribution.getUpperBounds().length);
+       
 
 //        double binWidth = (end - start) / DELTA_BIN_COUNT;
 //        binWidth = binWidth < DELTA_MIN_BIN_WIDTH ? DELTA_MIN_BIN_WIDTH : binWidth;
