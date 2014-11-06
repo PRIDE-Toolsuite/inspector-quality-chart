@@ -103,8 +103,14 @@ public class QuantitationChart extends PrideXYPlot {
         int i = 0;
         for (String category: categories.keySet()) {
 
-            if(!categories.get(category).getValue())
+            if(!categories.get(category).getValue()){
                renderer.setSeriesShapesVisible(i, false);
+               renderer.setSeriesVisible(i, false);
+            }else{
+                renderer.setSeriesShapesVisible(i, true);
+                renderer.setSeriesVisible(i, true);
+            }
+
             i++;
             //renderer.setSeriesPaint(i, color);
         }
