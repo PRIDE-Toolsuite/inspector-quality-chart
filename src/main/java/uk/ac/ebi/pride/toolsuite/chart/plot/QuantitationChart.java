@@ -19,6 +19,7 @@ import uk.ac.ebi.pride.toolsuite.chart.io.QuartilesType;
 import uk.ac.ebi.pride.toolsuite.chart.plot.axis.PrideNumberTickUnit;
 import uk.ac.ebi.pride.toolsuite.chart.plot.label.CategoryPercentageLabel;
 import uk.ac.ebi.pride.toolsuite.chart.plot.label.XYPercentageLabel;
+import uk.ac.ebi.pride.utilities.util.Tuple;
 
 import java.awt.*;
 import java.awt.List;
@@ -37,7 +38,7 @@ public class QuantitationChart extends PrideXYPlot {
 
     private XYSeries spectraSeries;
 
-    private Collection<String> categories;
+    private Map<String, Tuple<Boolean, Boolean>> categories;
 
     public QuantitationChart(XYSeriesCollection dataset, PrideDataCategoryType prideDataType) {
         this(dataset, prideDataType, true);
@@ -52,10 +53,10 @@ public class QuantitationChart extends PrideXYPlot {
             seriesCollection.addSeries(serie);
         }
 
-        categories = new ArrayList<String>();
+        categories = new HashMap<String, Tuple<Boolean, Boolean>>();
 
         for(int i=0; i < dataset.getSeriesCount(); i++){
-            categories.add(dataset.getSeries(i).getKey().toString());
+            categories.put(dataset.getSeries(i).getKey().toString(), new Tuple<Boolean, Boolean>(true, true));
         }
 
         //Set first series of the variables
@@ -67,12 +68,13 @@ public class QuantitationChart extends PrideXYPlot {
         refresh();
     }
 
-    public Map<String, Boolean> getOptionStudyList() {
+    public Map<String, Tuple<Boolean, Boolean>> getOptionStudyList() {
 
-        Map<String, Boolean> optionList = new TreeMap<String, Boolean>();
-        for(String category: categories)
-            optionList.put(category,true);
-        return optionList;
+        Map<String, Tuple<Boolean, Boolean>> optionList = new HashMap<String, Tuple<Boolean, Boolean>>();
+        if(categories == null )
+            return optionList;
+        return categories;
+
     }
 
     @Override
@@ -89,47 +91,27 @@ public class QuantitationChart extends PrideXYPlot {
         return null;
     }
 
-    public void updateSpectraSeries(String key) {
-        if (spectraSeries.getKey().equals(key)) {
-            return;
-        }
+    public void updateSpectraSeries(Boolean status, String key) {
 
-        XYSeries series = getSpectraSeries(key);
-        if (series == null) {
-            // can not find series in internal spectra series list.
-            return;
-        }
-
-        seriesCollection.removeSeries(spectraSeries);
-        spectraSeries = series;
-        seriesCollection.addSeries(spectraSeries);
+        categories.get(key).setValue(status);
         refresh();
     }
 
     private void refresh() {
 
-        setDataset(seriesCollection);
         XYSplineRenderer renderer = (XYSplineRenderer) getRenderer();
+        int i = 0;
+        for (String category: categories.keySet()) {
 
-        String seriesKey;
-        Color color;
-        for (int i = 0; i < getSeriesCount(); i++) {
-
-            renderer.setSeriesShapesVisible(i, false);
-
-            seriesKey = (String) getDataset().getSeriesKey(i);
-
-            // setting QuartilesType.NONE color
-
-            color = Color.RED;
-
-
-            renderer.setSeriesPaint(i, color);
+            if(!categories.get(category).getValue())
+               renderer.setSeriesShapesVisible(i, false);
+            i++;
+            //renderer.setSeriesPaint(i, color);
         }
 
-        int seriesSize = seriesCollection.getSeries().size();
-        if (seriesSize > 3)
-            renderer.setSeriesVisibleInLegend(seriesSize - 3, false);
+//        int seriesSize = seriesCollection.getSeries().size();
+//        if (seriesSize > 3)
+//            renderer.setSeriesVisibleInLegend(seriesSize - 3, false);
     }
 
     public void setDomainUnitSize(double domainUnitSize) {
