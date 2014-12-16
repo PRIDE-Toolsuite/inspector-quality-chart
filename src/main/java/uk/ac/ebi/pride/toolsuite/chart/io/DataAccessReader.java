@@ -559,13 +559,10 @@ public class DataAccessReader extends PrideDataReader {
 
         EmpiricalDistribution empiricalDistribution = new EmpiricalDistribution(20);
         empiricalDistribution.load(distribution);
-       
 
-//        double binWidth = (end - start) / DELTA_BIN_COUNT;
-//        binWidth = binWidth < DELTA_MIN_BIN_WIDTH ? DELTA_MIN_BIN_WIDTH : binWidth;
+
         PrideEqualWidthHistogramDataSource dataSource = new PrideEqualWidthHistogramDataSource(preQuantList.toArray(new PrideData[preQuantList.size()]), false, true);
 
-        //dataSource.appendBins(dataSource.generateBins(-DELTA_BIN_COUNT * binWidth, binWidth, DELTA_BIN_COUNT * 2));
         for(int i = 0; i < empiricalDistribution.getUpperBounds().length -1; i++){
             dataSource.appendBin(new PrideHistogramBin(empiricalDistribution.getUpperBounds()[i],empiricalDistribution.getUpperBounds()[i+1]));
         }
