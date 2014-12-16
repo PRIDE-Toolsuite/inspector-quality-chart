@@ -2,7 +2,6 @@ package uk.ac.ebi.pride.toolsuite.chart.io;
 
 
 import org.apache.commons.math3.random.EmpiricalDistribution;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.log4j.Logger;
 import uk.ac.ebi.pride.toolsuite.chart.PrideChartType;
 import uk.ac.ebi.pride.toolsuite.chart.dataset.*;
@@ -10,6 +9,7 @@ import uk.ac.ebi.pride.toolsuite.chart.utils.PridePlotUtils;
 import uk.ac.ebi.pride.utilities.data.controller.DataAccessController;
 import uk.ac.ebi.pride.utilities.data.controller.DataAccessUtilities;
 import uk.ac.ebi.pride.utilities.data.core.*;
+import uk.ac.ebi.pride.utilities.data.filter.AccessionFilter;
 import uk.ac.ebi.pride.utilities.mol.MoleculeUtilities;
 import uk.ac.ebi.pride.utilities.util.Tuple;
 
@@ -34,6 +34,7 @@ public class DataAccessReader extends PrideDataReader {
 
     private String source = "DataAccessController";
     private DataAccessController controller;
+    private AccessionFilter<String> filter;
 
     private boolean noPeptide = true;
     private boolean noSpectra = true;
@@ -61,10 +62,15 @@ public class DataAccessReader extends PrideDataReader {
     private Map<Comparable, List<Double>> variablesStudy = new HashMap<Comparable, List<Double>>();
 
     public DataAccessReader(DataAccessController controller) throws PrideDataException {
+        this(controller, null);
+    }
+
+    public DataAccessReader(DataAccessController controller, AccessionFilter<String> filter) throws PrideDataException {
         if (controller == null) {
             throw new NullPointerException(source + " is null!");
         }
         this.controller = controller;
+        this.filter = filter;
 
         readData();
     }
@@ -112,85 +118,88 @@ public class DataAccessReader extends PrideDataReader {
 
         for (Comparable proteinId : controller.getProteinIds()) {
 
-            protein = controller.getProteinById(proteinId);
-            peptideList = protein.getPeptides();
-            // fill peptides per protein
-            int size = peptideList.size();
-            if (size < 6) {
-                peptideBars[size - 1]++;
-            } else {
-                peptideBars[5]++;
-            }
-
-            int missedCleavages;
-            Double deltaMZ;
-            for (Peptide peptide : peptideList) {
-
-                noPeptide = false;
-                peptideSize++;
-
-                // fill delta m/z histogram.
-                deltaMZ = calcDeltaMZ(peptide);
-                if (deltaMZ != null) {
-                    deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_SPECTRA));
-                    if(controller.hasDecoyInformation()){
-                        if(peptide.getPeptideEvidence().isDecoy()){
-                            deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_DECOY));
-                        }else{
-                            deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_TARGET));
-                        }
-                    }
-
-                }
-
-                // fill missed cleavages
-                missedCleavages = calcMissedCleavages(peptide);
-                if (missedCleavages < 4) {
-                    missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_SPECTRA));
-                    if(controller.hasDecoyInformation())
-                        if(peptide.getPeptideEvidence().isDecoy())
-                            missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_DECOY));
-                        else
-                            missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_TARGET));
-
+            String proteinAccession = controller.getProteinAccession(proteinId);
+            if (filter == null || filter.apply(proteinAccession)) {
+                protein = controller.getProteinById(proteinId);
+                peptideList = protein.getPeptides();
+                // fill peptides per protein
+                int size = peptideList.size();
+                if (size < 6) {
+                    peptideBars[size - 1]++;
                 } else {
-                    missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_SPECTRA));
-                    if(controller.hasDecoyInformation())
-                        if(peptide.getPeptideEvidence().isDecoy())
-                            missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_DECOY));
-                        else
-                            missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_TARGET));
+                    peptideBars[5]++;
                 }
 
-                if(controller.hasDecoyInformation() && controller.hasSpectrum()){
-                    Comparable id = controller.getSpectrumIdForPeptide(peptide.getSpectrumIdentification().getId());
-                    if(id != null){
-                        Tuple<Boolean, Boolean> status = new Tuple<Boolean, Boolean>(false,false);
-                        if(spectrumDecoy.containsKey(id))
-                            status = spectrumDecoy.get(id);
-                        if (peptide.getPeptideEvidence().isDecoy()){
-                            status.setValue(true);
-                        }else{
-                            status.setKey(true);
+                int missedCleavages;
+                Double deltaMZ;
+                for (Peptide peptide : peptideList) {
+
+                    noPeptide = false;
+                    peptideSize++;
+
+                    // fill delta m/z histogram.
+                    deltaMZ = calcDeltaMZ(peptide);
+                    if (deltaMZ != null) {
+                        deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_SPECTRA));
+                        if (controller.hasDecoyInformation()) {
+                            if (peptide.getPeptideEvidence().isDecoy()) {
+                                deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_DECOY));
+                            } else {
+                                deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_TARGET));
+                            }
                         }
-                        spectrumDecoy.put(id,status);
+
+                    }
+
+                    // fill missed cleavages
+                    missedCleavages = calcMissedCleavages(peptide);
+                    if (missedCleavages < 4) {
+                        missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_SPECTRA));
+                        if (controller.hasDecoyInformation())
+                            if (peptide.getPeptideEvidence().isDecoy())
+                                missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_DECOY));
+                            else
+                                missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_TARGET));
+
+                    } else {
+                        missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_SPECTRA));
+                        if (controller.hasDecoyInformation())
+                            if (peptide.getPeptideEvidence().isDecoy())
+                                missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_DECOY));
+                            else
+                                missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_TARGET));
+                    }
+
+                    if (controller.hasDecoyInformation() && controller.hasSpectrum()) {
+                        Comparable id = controller.getSpectrumIdForPeptide(peptide.getSpectrumIdentification().getId());
+                        if (id != null) {
+                            Tuple<Boolean, Boolean> status = new Tuple<Boolean, Boolean>(false, false);
+                            if (spectrumDecoy.containsKey(id))
+                                status = spectrumDecoy.get(id);
+                            if (peptide.getPeptideEvidence().isDecoy()) {
+                                status.setValue(true);
+                            } else {
+                                status.setKey(true);
+                            }
+                            spectrumDecoy.put(id, status);
+                        }
                     }
                 }
-            }
 
-            //If mzTab and contains quantitation data
-            if(controller.getType().equals(DataAccessController.Type.MZTAB) && controller.hasQuantData()){
-                List<QuantPeptide> quantPeptides = controller.getProteinById(proteinId).getQuantPeptides();
-                for(QuantPeptide peptide: quantPeptides){
-                    QuantScore quantScore = peptide.getQuantScore();
-                    for(Comparable studyValueKey: quantScore.getStudyVariableScores().keySet()){
-                        if(quantScore.getStudyVariableScores().get(studyValueKey) != null){
-                            variablesStudy.get(studyValueKey).add(quantScore.getStudyVariableScores().get(studyValueKey));
+                //If mzTab and contains quantitation data
+                if (controller.getType().equals(DataAccessController.Type.MZTAB) && controller.hasQuantData()) {
+                    List<QuantPeptide> quantPeptides = controller.getProteinById(proteinId).getQuantPeptides();
+                    for (QuantPeptide peptide : quantPeptides) {
+                        QuantScore quantScore = peptide.getQuantScore();
+                        for (Comparable studyValueKey : quantScore.getStudyVariableScores().keySet()) {
+                            if (quantScore.getStudyVariableScores().get(studyValueKey) != null) {
+                                variablesStudy.get(studyValueKey).add(quantScore.getStudyVariableScores().get(studyValueKey));
+                            }
                         }
                     }
                 }
-            }
 
+            }
         }
 
         // spectrum level statistics.
