@@ -82,11 +82,13 @@ public class DataAccessReader extends PrideDataReader {
 
     @Override
     protected void reading() {
+        boolean hasDecoyInformation = controller.hasDecoyInformation();
+
         for (int i = 0; i < 6; i++) {
             peptidesDomain[i] = i + 1.0;
         }
 
-        //If mzTab and contains quantitation data
+        //If mzTab and contains Quantitation data
         if(controller.getType().equals(DataAccessController.Type.MZTAB) && controller.hasQuantData()){
             for(Comparable idStudyVariable: controller.getStudyVariables().keySet()){
                 variables.put(idStudyVariable, controller.getStudyVariables().get(idStudyVariable).getDescription());
@@ -104,8 +106,6 @@ public class DataAccessReader extends PrideDataReader {
 
         int[] peptideBars = new int[6];
         List<PrideData> missedBars = new ArrayList<PrideData>();
-//        int[] decoyMissedBar  = new int[5];
-//        int[] targetMissedBar = new int[5];
         int[] preChargeBars = new int[8];
 
         List<PrideData> deltaMZList = new ArrayList<PrideData>();
@@ -141,7 +141,7 @@ public class DataAccessReader extends PrideDataReader {
                     deltaMZ = calcDeltaMZ(peptide);
                     if (deltaMZ != null) {
                         deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_SPECTRA));
-                        if (controller.hasDecoyInformation()) {
+                        if (hasDecoyInformation) {
                             if (peptide.getPeptideEvidence().isDecoy()) {
                                 deltaMZList.add(new PrideData(deltaMZ, PrideDataType.IDENTIFIED_DECOY));
                             } else {
@@ -150,12 +150,11 @@ public class DataAccessReader extends PrideDataReader {
                         }
 
                     }
-
                     // fill missed cleavages
-                    missedCleavages = calcMissedCleavages(peptide);
+                    missedCleavages = MoleculeUtilities.calcMissedCleavages(peptide.getSequence());
                     if (missedCleavages < 4) {
                         missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_SPECTRA));
-                        if (controller.hasDecoyInformation())
+                        if (hasDecoyInformation)
                             if (peptide.getPeptideEvidence().isDecoy())
                                 missedBars.add(new PrideData(missedCleavages + 0.0d, PrideDataType.IDENTIFIED_DECOY));
                             else
@@ -163,14 +162,14 @@ public class DataAccessReader extends PrideDataReader {
 
                     } else {
                         missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_SPECTRA));
-                        if (controller.hasDecoyInformation())
+                        if (hasDecoyInformation)
                             if (peptide.getPeptideEvidence().isDecoy())
                                 missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_DECOY));
                             else
                                 missedBars.add(new PrideData(4 + 0.0d, PrideDataType.IDENTIFIED_TARGET));
                     }
 
-                    if (controller.hasDecoyInformation() && controller.hasSpectrum()) {
+                    if (hasDecoyInformation && controller.hasSpectrum()) {
                         Comparable id = controller.getSpectrumIdForPeptide(peptide.getSpectrumIdentification().getId());
                         if (id != null) {
                             Tuple<Boolean, Boolean> status = new Tuple<Boolean, Boolean>(false, false);
@@ -186,7 +185,7 @@ public class DataAccessReader extends PrideDataReader {
                     }
                 }
 
-                //If mzTab and contains quantitation data
+                //If mzTab and contains Quantitation data
                 if (controller.getType().equals(DataAccessController.Type.MZTAB) && controller.hasQuantData()) {
                     List<QuantPeptide> quantPeptides = controller.getProteinById(proteinId).getQuantPeptides();
                     for (QuantPeptide peptide : quantPeptides) {
@@ -212,10 +211,13 @@ public class DataAccessReader extends PrideDataReader {
         PrideSpectrumHistogramDataSource avgDataSource = new PrideSpectrumHistogramDataSource(true);
 
         PrideDataType dataType;
-        for (Comparable spectrumId : controller.getSpectrumIds()) {
+        Iterator<Comparable> itIds = controller.getSpectrumIds().iterator();
+        while(itIds != null && itIds.hasNext()) {
+            Comparable spectrumId = itIds.next();
             noSpectra = false;
             spectrum = controller.getSpectrumById(spectrumId);
             List<Peptide> peptides = spectrum.getPeptide();
+            boolean isIdentified = spectrumDecoy.containsKey(spectrumId);
 
             // precursor charge and mass.
             if (peptides == null) {
@@ -226,16 +228,16 @@ public class DataAccessReader extends PrideDataReader {
                 preMZ = peptides.get(0).getPrecursorMz();
             }
             // Charge State must be less than 8, but some files can have the annotation wrong
-            if (preCharge != null && preCharge < 8 && controller.isIdentifiedSpectrum(spectrumId)) {
+            if (preCharge != null && preCharge < 8 && preCharge > 0) {
                 // Identified spectrum.
                 preChargeBars[preCharge - 1]++;
             }
 
             if (preMZ != null && preMZ > -1 && preCharge != null && preCharge < 8) {
                 preMassedList.add(new PrideData(preMZ * preCharge,
-                        controller.isIdentifiedSpectrum(spectrumId) ? PrideDataType.IDENTIFIED_SPECTRA : PrideDataType.UNIDENTIFIED_SPECTRA
+                        isIdentified ? PrideDataType.IDENTIFIED_SPECTRA : PrideDataType.UNIDENTIFIED_SPECTRA
                 ));
-                if(controller.hasDecoyInformation()){
+                if(hasDecoyInformation){
                     if(spectrumDecoy.containsKey(spectrum.getId())){
                         Tuple<Boolean, Boolean> status = spectrumDecoy.get(spectrumId);
                         if(status.getKey())
@@ -245,7 +247,7 @@ public class DataAccessReader extends PrideDataReader {
                     }
                 }
             }
-            if (controller.isIdentifiedSpectrum(spectrumId)) {
+            if (isIdentified) {
                 identifiedSpectraSize++;
                 dataType = PrideDataType.IDENTIFIED_SPECTRA;
             } else {
@@ -257,7 +259,7 @@ public class DataAccessReader extends PrideDataReader {
                 noTandemSpectra = false;
                 peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, PrideDataType.ALL_SPECTRA));
                 peaksMSList.add(new PrideData(spectrum.getMzBinaryDataArray().getDoubleArray().length + 0.0d, dataType));
-                if(controller.hasDecoyInformation()){
+                if(hasDecoyInformation){
                     if(spectrumDecoy.containsKey(spectrum.getId())){
                         Tuple<Boolean, Boolean> status = spectrumDecoy.get(spectrumId);
                         if(status.getKey())
@@ -268,10 +270,11 @@ public class DataAccessReader extends PrideDataReader {
                 }
 
                 avgDataSource.addSpectrum(spectrum, dataType);
+                double[] itArray = spectrum.getIntensityBinaryDataArray().getDoubleArray();
 
-                for (double v : spectrum.getIntensityBinaryDataArray().getDoubleArray()) {
+                for (double v : itArray) {
                     peaksIntensityList.add(new PrideData(v, dataType));
-                    if(controller.hasDecoyInformation()){
+                    if(hasDecoyInformation){
                         if(spectrumDecoy.containsKey(spectrum.getId())){
                             Tuple<Boolean, Boolean> status = spectrumDecoy.get(spectrumId);
                             if(status.getKey())
@@ -287,38 +290,6 @@ public class DataAccessReader extends PrideDataReader {
 
         // release memory.
         controller = null;
-
-//        start = System.currentTimeMillis();
-//        readPeptide(peptideBars);
-//        logger.debug("create peptide data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readDelta(deltaMZList);
-//        logger.debug("create delta mz data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readMissed(missedBars);
-//        logger.debug("create missed cleavages data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readPreCharge(preChargeBars);
-//        logger.debug("create precursor charge data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readPreMasses(preMassedList);
-//        logger.debug("create precursor masses data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readAvg(avgDataSource);
-//        logger.debug("create average ms/ms data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readPeakMS(peaksMSList);
-//        logger.debug("create peaks per ms/ms data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
-//
-//        start = System.currentTimeMillis();
-//        readPeakIntensity(peaksIntensityList);
-//        logger.debug("create peak intensity data set cost: " + PridePlotUtils.getTimeCost(start, System.currentTimeMillis()));
 
         readPeptide(peptideBars);
         readDelta(deltaMZList);
@@ -346,19 +317,6 @@ public class DataAccessReader extends PrideDataReader {
                 peptide.getPrecursorCharge(),
                 modMassList
         );
-    }
-
-    private int calcMissedCleavages(Peptide peptide) {
-        String sequence = peptide.getSequence();
-        //Always remove the last K or R from sequence
-        sequence = sequence.replaceAll("[K|R]$", "");
-
-        //We assume the hypothesis KR|P
-        sequence = sequence.replaceAll("[K|R]P", "");
-        int initialLength = sequence.length();
-
-        sequence = sequence.replaceAll("[K|R]", "");
-        return initialLength - sequence.length();
     }
 
     /**
