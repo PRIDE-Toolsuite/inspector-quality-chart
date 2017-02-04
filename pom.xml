@@ -7,19 +7,14 @@
     <name>PRIDE Inspector Quality Chart library</name>
     <url>http://github.com/PRIDE-Toolsuite/inspector-quality-chart</url>
 
-    <licenses>
-        <license>
-            <name>Apache 2</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-            <comments>A business-friendly OSS license</comments>
-        </license>
-    </licenses>
+    <parent>
+        <groupId>uk.ac.ebi.pride.architectural</groupId>
+        <artifactId>pride-core</artifactId>
+        <version>1.0.1</version>
+    </parent>
 
-    <organization>
-        <name>European Bioinformatics Institute</name>
-        <url>http://www.ebi.ac.uk</url>
-    </organization>
+    <!-- LICENSE - from parent POM -->
+    <!-- ORGANIZATION - from parent POM -->
 
     <properties>
         <assembly.dir>PRIDE_Chart</assembly.dir>
