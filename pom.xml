@@ -253,8 +253,8 @@
 
     <!--scm git config-->
     <scm>
-        <connection>scm:git:github.com/PRIDE-Toolsuite/inspector-quality-chart.git</connection>
-        <developerConnection>scm:git:git@github.com:PRIDE-Toolsuite/inspector-quality-chart.git</developerConnection>
+        <connection>scm:git:https://github.com/PRIDE-Toolsuite/inspector-quality-chart.git</connection>
+        <developerConnection>scm:git:https://github.com/PRIDE-Toolsuite/inspector-quality-chart.git</developerConnection>
         <url>https://github.com/PRIDE-Toolsuite/inspector-quality-chart.git</url>
         <tag>HEAD</tag>
     </scm>
