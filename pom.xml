@@ -18,8 +18,9 @@
 
     <properties>
         <assembly.dir>PRIDE_Chart</assembly.dir>
-        <ms-data-core-api.version>2.0.7</ms-data-core-api.version>
-        <junit.version>4.3.1</junit.version>
+        <uk.ac.ebi.pride.utilities-ms-data-core-api.version>2.0.12</uk.ac.ebi.pride.utilities-ms-data-core-api.version>
+        <!-- TDD -->
+        <uk.ac.ebi.pride.architectural-pride-tdd.version>1.0.3</uk.ac.ebi.pride.architectural-pride-tdd.version>
         <jfreechart.verison>1.0.19</jfreechart.verison>
         <jcommon.version>1.0.16</jcommon.version>
         <json.version>20090211</json.version>
@@ -80,15 +81,15 @@
         <dependency>
             <groupId>uk.ac.ebi.pride.utilities</groupId>
             <artifactId>ms-data-core-api</artifactId>
-            <version>${ms-data-core-api.version}</version>
+            <version>${uk.ac.ebi.pride.utilities-ms-data-core-api.version}</version>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
+            <groupId>uk.ac.ebi.pride.architectural</groupId>
+            <artifactId>pride-tdd</artifactId>
+            <type>pom</type>
+            <version>${uk.ac.ebi.pride.architectural-pride-tdd.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
            <groupId>org.json</groupId>
            <artifactId>json</artifactId>
