@@ -16,16 +16,6 @@
     <!-- LICENSE - from parent POM -->
     <!-- ORGANIZATION - from parent POM -->
 
-    <properties>
-        <assembly.dir>PRIDE_Chart</assembly.dir>
-        <uk.ac.ebi.pride.utilities-ms-data-core-api.version>2.0.12</uk.ac.ebi.pride.utilities-ms-data-core-api.version>
-        <!-- TDD -->
-        <uk.ac.ebi.pride.architectural-pride-tdd.version>1.0.3</uk.ac.ebi.pride.architectural-pride-tdd.version>
-        <jfreechart.verison>1.0.19</jfreechart.verison>
-        <jcommon.version>1.0.16</jcommon.version>
-        <json.version>20160810</json.version>
-    </properties>
-
     <developers>
         <developer>
             <id>ypriverol</id>
@@ -67,6 +57,16 @@
         </contributor>
     </contributors>
 
+    <properties>
+        <assembly.dir>PRIDE_Chart</assembly.dir>
+        <uk.ac.ebi.pride.utilities-ms-data-core-api.version>2.0.12</uk.ac.ebi.pride.utilities-ms-data-core-api.version>
+        <!-- TDD -->
+        <uk.ac.ebi.pride.architectural-pride-tdd.version>1.0.3</uk.ac.ebi.pride.architectural-pride-tdd.version>
+        <jfreechart.verison>1.0.19</jfreechart.verison>
+        <jcommon.version>1.0.16</jcommon.version>
+        <json.version>20160810</json.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.jfree</groupId>
@@ -105,14 +105,6 @@
             </resource>
         </resources>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -178,31 +170,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.7</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <additionalparam>-Xdoclint:none</additionalparam>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5</version>
-                <configuration>
-                    <remoteTagging>true</remoteTagging>
-                    <goals>deploy</goals>
-                </configuration>
             </plugin>
         </plugins>
     </build>
