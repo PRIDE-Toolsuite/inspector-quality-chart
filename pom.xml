@@ -199,15 +199,7 @@
             <url>https://repository.jboss.org/nexus/content/repositories/releases/</url>
         </repository>
     </repositories>
-
-    <!-- PluginRepositores -->
-    <pluginRepositories>
-        <pluginRepository>
-            <id>maven2-repository.dev.java.net</id>
-            <url>http://download.java.net/maven/2</url>
-        </pluginRepository>
-    </pluginRepositories>
-
+    
     <!-- Overwrites the previous repositories-->
     <distributionManagement>
         <!-- EBI repo -->
